@@ -1,26 +1,31 @@
 """
 Main entry point for Render deployment.
-This ensures credit_card_optimizer is imported as a package.
+This file runs from within the credit_card_optimizer directory.
 """
 
 import os
 import sys
 
-# Get the directory containing this file (credit_card_optimizer/)
+# Add parent directory to path so we can import as a package
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# Get parent directory (should be /opt/render/project/src/)
 parent_dir = os.path.dirname(current_dir)
 
-# Add parent directory to Python path so we can import credit_card_optimizer as a package
+# Add parent to path
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Now import as a package (this allows relative imports in api.py to work)
-from credit_card_optimizer.api import app
+# Import the app - try both ways
+try:
+    from credit_card_optimizer.api import app
+except ImportError:
+    # Fallback: import directly if we're already in the package
+    from api import app
 
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     print(f"Starting Credit Card Optimizer API on port {port}...")
+    print(f"Current directory: {os.getcwd()}")
+    print(f"Python path: {sys.path[:3]}")
     uvicorn.run(app, host="0.0.0.0", port=port)
 
