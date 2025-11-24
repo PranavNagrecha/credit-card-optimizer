@@ -3,7 +3,7 @@ services:
     name: credit-card-optimizer
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: cd credit_card_optimizer && python app.py
+    startCommand: python app.py
     envVars:
       - key: USE_CACHE
         value: true
