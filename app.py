@@ -32,13 +32,13 @@ from models import CardProduct, EarningRule
 # For scraper_job, we implement it directly using direct imports
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
-    # Add scrapers directory to path
-    scrapers_dir = os.path.join(current_dir, "scrapers")
-    if scrapers_dir not in sys.path:
-        sys.path.insert(0, scrapers_dir)
+    # Ensure current directory is in path for relative imports to work
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
     
     try:
-        # Import scrapers using direct imports
+        # Import scrapers - they use relative imports (from ...models)
+        # So we need to import them as if we're in the package
         from scrapers.issuers.amex_manual import AmexScraper
         from scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
         from scrapers.issuers.barclays_manual import BarclaysScraper
