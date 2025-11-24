@@ -44,7 +44,9 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
                 {
                     "description": "Travel purchased through Chase Ultimate Rewards",
                     "categories": ["travel"],
+                    "merchant_names": ["Chase Ultimate Rewards", "Chase Travel Portal"],
                     "multiplier": 5.0,
+                    "stacking_rules": "Must book through Chase Ultimate Rewards portal",
                 },
                 {
                     "description": "Dining purchases",
@@ -167,14 +169,23 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             "foreign_transaction_fee": 0.0,
             "earning_rules": [
                 {
-                    "description": "Flights booked directly with airlines or through AmexTravel.com",
+                    "description": "Flights booked directly with airlines",
                     "categories": ["travel", "airline"],
                     "multiplier": 5.0,
                 },
                 {
+                    "description": "Flights booked through AmexTravel.com",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["AmexTravel.com", "American Express Travel"],
+                    "multiplier": 5.0,
+                    "stacking_rules": "Must book through AmexTravel.com portal",
+                },
+                {
                     "description": "Prepaid hotels booked through AmexTravel.com",
                     "categories": ["travel", "hotel"],
+                    "merchant_names": ["AmexTravel.com", "American Express Travel"],
                     "multiplier": 5.0,
+                    "stacking_rules": "Must book through AmexTravel.com portal",
                 },
                 {
                     "description": "All other purchases",
@@ -323,15 +334,11 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             "foreign_transaction_fee": 0.0,
             "earning_rules": [
                 {
-                    "description": "Travel purchases",
+                    "description": "Hotels and rental cars booked through Capital One Travel",
                     "categories": ["travel"],
+                    "merchant_names": ["Capital One Travel", "Capital One"],
                     "multiplier": 10.0,
-                },
-                {
-                    "description": "Hotels and rental cars booked through Capital One",
-                    "categories": ["travel"],
-                    "multiplier": 10.0,
-                    "stacking_rules": "Must book through Capital One portal",
+                    "stacking_rules": "Must book through Capital One Travel portal",
                 },
                 {
                     "description": "All other purchases",
@@ -952,4 +959,5 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
         },
     },
 }
+
 
