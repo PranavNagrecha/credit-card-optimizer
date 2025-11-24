@@ -98,13 +98,17 @@ def scrape_all_cards_and_rules():
 
 # Now import api components
 import logging
+import threading
 from contextlib import asynccontextmanager
 from typing import List, Optional
+from datetime import datetime, time
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 from pydantic import BaseModel, Field
 
 logging.basicConfig(
@@ -135,12 +139,50 @@ def load_all_cards_and_rules(force_refresh: bool = False) -> tuple[List[CardProd
         logger.error(f"Failed to load cards and rules: {e}", exc_info=True)
         return [], []
 
+# Background scheduler for daily refresh
+_scheduler = None
+
+def run_daily_refresh():
+    """Background job that runs daily at midnight to refresh card data."""
+    logger.info("🔄 Daily refresh job started (runs at midnight)")
+    try:
+        success = scrape_all_cards_and_rules()
+        if success:
+            # Reload cache with fresh data
+            load_all_cards_and_rules(force_refresh=True)
+            logger.info("✅ Daily refresh completed successfully")
+        else:
+            logger.error("❌ Daily refresh failed - using cached data")
+    except Exception as e:
+        logger.error(f"❌ Error in daily refresh job: {e}", exc_info=True)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global _scheduler
+    
     logger.info("Loading cards and rules...")
     load_all_cards_and_rules()
     logger.info("Cards and rules loaded successfully")
+    
+    # Set up daily scheduler (runs at midnight UTC)
+    logger.info("Setting up daily refresh scheduler (runs at midnight UTC)...")
+    _scheduler = BackgroundScheduler()
+    _scheduler.add_job(
+        run_daily_refresh,
+        trigger=CronTrigger(hour=0, minute=0),  # Midnight UTC
+        id='daily_refresh',
+        name='Daily card data refresh',
+        replace_existing=True
+    )
+    _scheduler.start()
+    logger.info("✅ Daily refresh scheduler started (will run at 00:00 UTC daily)")
+    
     yield
+    
+    # Shutdown scheduler
+    if _scheduler:
+        _scheduler.shutdown()
+        logger.info("Scheduler shut down")
     logger.info("Shutting down...")
 
 app = FastAPI(
