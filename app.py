@@ -452,10 +452,56 @@ async def get_recommendation(
         raise HTTPException(status_code=500, detail=f"Error processing recommendation: {str(e)}")
 
 @app.get("/api/cards", response_model=List[CardResponse], tags=["Cards"])
-async def list_cards():
+async def list_cards(
+    issuer: Optional[str] = Query(None, description="Filter by issuer name (e.g., 'Chase', 'American Express')"),
+    reward_type: Optional[str] = Query(None, description="Filter by reward type: 'cashback', 'points', 'miles'"),
+    network: Optional[str] = Query(None, description="Filter by network: 'VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'"),
+    card_type: Optional[str] = Query(None, description="Filter by card type: 'personal', 'business', or 'all'"),
+):
+    """List all credit cards with optional filtering."""
     try:
         all_cards, _ = load_all_cards_and_rules()
-        return [card_to_response(card) for card in all_cards]
+        
+        # Apply filters
+        filtered_cards = all_cards
+        
+        # Filter by business/personal (default: all if not specified)
+        if card_type:
+            if card_type.lower() == 'personal':
+                filtered_cards = [c for c in filtered_cards if not c.is_business_card]
+            elif card_type.lower() == 'business':
+                filtered_cards = [c for c in filtered_cards if c.is_business_card]
+            # 'all' means no filtering
+        
+        # Filter by issuer
+        if issuer:
+            filtered_cards = [c for c in filtered_cards if issuer.lower() in c.issuer.name.lower()]
+        
+        # Filter by reward type
+        if reward_type:
+            reward_type_map = {
+                'cashback': RewardType.CASHBACK_PERCENT,
+                'points': RewardType.POINTS_PER_DOLLAR,
+                'miles': RewardType.MILES_PER_DOLLAR
+            }
+            target_type = reward_type_map.get(reward_type.lower())
+            if target_type:
+                filtered_cards = [c for c in filtered_cards if c.type == target_type]
+        
+        # Filter by network
+        if network:
+            network_map = {
+                'visa': CardNetwork.VISA,
+                'mastercard': CardNetwork.MASTERCARD,
+                'amex': CardNetwork.AMEX,
+                'american express': CardNetwork.AMEX,
+                'discover': CardNetwork.DISCOVER
+            }
+            target_network = network_map.get(network.lower())
+            if target_network:
+                filtered_cards = [c for c in filtered_cards if c.network == target_network]
+        
+        return [card_to_response(card) for card in filtered_cards]
     except Exception as e:
         logger.error(f"Error listing cards: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error listing cards: {str(e)}")

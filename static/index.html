@@ -402,6 +402,7 @@
                     onkeypress="if(event.key === 'Enter') search()"
                 >
                 <button onclick="search()" id="searchBtn">Search</button>
+                <button onclick="browseAllCards()" id="browseBtn" style="margin-left: 10px; padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Browse All Cards</button>
             </div>
             <div class="examples">
                 <span style="color: #999; font-size: 0.9em; margin-right: 8px;">Try:</span>
@@ -416,21 +417,21 @@
             <div class="filters-section">
                 <div class="filter-group">
                     <label for="filterCardType">Card Type:</label>
-                    <select id="filterCardType">
-                        <option value="personal">Personal (Default)</option>
-                        <option value="business">Business</option>
+                    <select id="filterCardType" onchange="applyFiltersToResults()">
                         <option value="all">All Cards</option>
+                        <option value="personal">Personal</option>
+                        <option value="business">Business</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="filterIssuer">Issuer:</label>
-                    <select id="filterIssuer">
+                    <select id="filterIssuer" onchange="applyFiltersToResults()">
                         <option value="">All Issuers</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="filterRewardType">Reward Type:</label>
-                    <select id="filterRewardType">
+                    <select id="filterRewardType" onchange="applyFiltersToResults()">
                         <option value="">All Types</option>
                         <option value="cashback">Cashback</option>
                         <option value="points">Points</option>
@@ -439,7 +440,7 @@
                 </div>
                 <div class="filter-group">
                     <label for="filterNetwork">Network:</label>
-                    <select id="filterNetwork">
+                    <select id="filterNetwork" onchange="applyFiltersToResults()">
                         <option value="">All Networks</option>
                         <option value="visa">VISA</option>
                         <option value="mastercard">Mastercard</option>
@@ -449,7 +450,7 @@
                 </div>
                 <div class="filter-group">
                     <label for="filterMerchant">Merchant (optional):</label>
-                    <input type="text" id="filterMerchant" placeholder="e.g., Amazon, Walmart">
+                    <input type="text" id="filterMerchant" placeholder="e.g., Amazon, Walmart" onchange="applyFiltersToResults()">
                 </div>
             </div>
         </div>
