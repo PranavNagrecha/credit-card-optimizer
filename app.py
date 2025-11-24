@@ -29,7 +29,7 @@ from data_manager import DataManager
 from engine import find_best_cards_for_query
 from models import CardProduct, EarningRule
 
-# For scraper_job, we run it directly but need to handle imports properly
+# For scraper_job, we run it directly with proper PYTHONPATH setup
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
     import subprocess
@@ -41,34 +41,58 @@ def scrape_all_cards_and_rules():
         return False
     
     try:
-        logger.info("Running scraper_job.py directly...")
-        # Set PYTHONPATH to include parent directory so credit_card_optimizer is recognized as package
-        # This allows scrapers to use relative imports (from ...models)
+        logger.info("Running scraper_job.py...")
+        
+        # On Render: files are in /opt/render/project/src/ directly
+        # For relative imports (from ...models) to work, we need:
+        # 1. parent_dir in PYTHONPATH (so src/ can be treated as package root)
+        # 2. current_dir in PYTHONPATH (for direct imports)
+        # This makes scrapers/scrapers/issuers/chase_manual.py able to do "from ...models"
+        # because Python will resolve "..." relative to the package root
+        
         env = os.environ.copy()
         pythonpath_parts = []
-        # Add parent directory first so credit_card_optimizer package is found
+        
+        # Add parent_dir first - this is critical for relative imports
+        # When scrapers do "from ...models", Python needs to know where the package root is
         if parent_dir:
             pythonpath_parts.append(parent_dir)
-        # Add current directory for direct imports
+        
+        # Add current_dir for direct imports
         if current_dir:
             pythonpath_parts.append(current_dir)
+        
         # Preserve existing PYTHONPATH
         existing_pythonpath = env.get('PYTHONPATH', '')
         if existing_pythonpath:
             pythonpath_parts.append(existing_pythonpath)
+        
         env['PYTHONPATH'] = os.pathsep.join(pythonpath_parts)
         
-        logger.info(f"PYTHONPATH set to: {env['PYTHONPATH']}")
+        logger.info(f"PYTHONPATH: {env['PYTHONPATH']}")
         logger.info(f"Running from: {current_dir}")
+        logger.info(f"Script: {scraper_script}")
         
-        # Run scraper_job.py directly as a script
+        # On Render: files are in /opt/render/project/src/ directly
+        # To make relative imports work, we need to make src/ importable as credit_card_optimizer
+        # Solution: Create a temporary package structure by modifying PYTHONPATH
+        # and running Python with -m flag from parent directory
+        
+        # Create credit_card_optimizer symlink/copy in parent (if possible)
+        # OR: Run Python with modified import path
+        
+        # Best solution: Run as module from parent with proper setup
+        # We'll create a small wrapper that sets up the environment
+        
+        # For now, run directly with comprehensive PYTHONPATH
+        # The key is ensuring parent_dir is in PYTHONPATH so relative imports resolve
         result = subprocess.run(
             [sys.executable, scraper_script],
             cwd=current_dir,
             env=env,
             capture_output=True,
             text=True,
-            timeout=600  # 10 minute timeout
+            timeout=600
         )
         
         if result.returncode == 0:

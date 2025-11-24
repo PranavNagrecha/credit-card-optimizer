@@ -5,17 +5,38 @@ Uses comprehensive, accurate data since pages are JavaScript-rendered.
 """
 
 import re
+import sys
+from pathlib import Path
 from typing import List
 
-from ...models import (
-    CardIssuer,
-    CardNetwork,
-    CardProduct,
-    Cap,
-    EarningRule,
-    RewardProgram,
-    RewardType,
-)
+# Handle both package and flat structure imports
+try:
+    from ...models import (
+        CardIssuer,
+        CardNetwork,
+        CardProduct,
+        Cap,
+        EarningRule,
+        RewardProgram,
+        RewardType,
+    )
+except ImportError:
+    # Fallback for flat structure (Render): add parent directories to path
+    current_file = Path(__file__).resolve()
+    # Go up 3 levels: scrapers/issuers/ -> root
+    root_dir = current_file.parent.parent.parent
+    if str(root_dir) not in sys.path:
+        sys.path.insert(0, str(root_dir))
+    from models import (
+        CardIssuer,
+        CardNetwork,
+        CardProduct,
+        Cap,
+        EarningRule,
+        RewardProgram,
+        RewardType,
+    )
+
 from ..base import BaseScraper
 from .comprehensive_data import COMPREHENSIVE_CARD_DATA
 

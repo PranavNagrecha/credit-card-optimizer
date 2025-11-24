@@ -7,11 +7,28 @@ since most issuer websites are JavaScript-rendered and difficult to scrape relia
 
 from typing import Dict, List
 
-from ...models import (
-    CardNetwork,
-    Cap,
-    RewardType,
-)
+import sys
+from pathlib import Path
+
+# Handle both package and flat structure imports
+try:
+    from ...models import (
+        CardNetwork,
+        Cap,
+        RewardType,
+    )
+except ImportError:
+    # Fallback for flat structure (Render): add root directory to path
+    current_file = Path(__file__).resolve()
+    # Go up 3 levels: scrapers/issuers/file.py -> root
+    root_dir = current_file.parent.parent.parent
+    if str(root_dir) not in sys.path:
+        sys.path.insert(0, str(root_dir))
+    from models import (
+        CardNetwork,
+        Cap,
+        RewardType,
+    )
 
 # Comprehensive card data structure
 # Format: {issuer: {card_slug: {card_data}}}

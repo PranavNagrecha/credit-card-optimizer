@@ -9,17 +9,27 @@ import logging
 import sys
 from pathlib import Path
 
-# Add parent directory to path for package imports
-parent_dir = str(Path(__file__).parent.parent)
-if parent_dir not in sys.path:
-    sys.path.insert(0, parent_dir)
+# Import helper to setup paths correctly
+try:
+    import import_helper
+except ImportError:
+    # If import_helper doesn't exist, setup manually
+    parent_dir = str(Path(__file__).parent.parent)
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    current_dir = str(Path(__file__).parent)
+    if current_dir not in sys.path:
+        sys.path.insert(0, current_dir)
 
-# Add current directory to path
-current_dir = str(Path(__file__).parent)
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
+# Setup for relative imports to work
+# We need to ensure the current directory is treated as a package root
+# This allows scrapers to use "from ...models" successfully
+import os
+current_package_root = os.path.dirname(os.path.abspath(__file__))
+if current_package_root not in sys.path:
+    sys.path.insert(0, current_package_root)
 
-# Try package imports first, then fallback to direct imports
+# Try package imports first (for local development)
 try:
     from credit_card_optimizer.config import OFFLINE_MODE, USE_CACHE
     from credit_card_optimizer.data_manager import DataManager
@@ -34,7 +44,9 @@ try:
     from credit_card_optimizer.scrapers.issuers.us_bank_manual import USBankScraper
     from credit_card_optimizer.scrapers.issuers.wells_fargo_manual import WellsFargoScraper
 except ImportError:
-    # Fallback: direct imports (when running from same directory)
+    # Fallback: direct imports (for Render's flat structure)
+    # The scrapers will use relative imports (from ...models) which should work
+    # because we've set up sys.path correctly above
     from config import OFFLINE_MODE, USE_CACHE
     from data_manager import DataManager
     from scrapers.issuers.amex_manual import AmexScraper

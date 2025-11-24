@@ -25,14 +25,34 @@ try:
 except ImportError:
     SELENIUM_AVAILABLE = False
 
-from ..config import (
-    MAX_RETRIES,
-    RATE_LIMIT_DELAY,
-    REQUEST_TIMEOUT,
-    RETRY_DELAY_SECONDS,
-    USER_AGENT,
-)
-from ..models import CardProduct, EarningRule
+# Handle imports for both package and flat structure
+try:
+    from ..config import (
+        MAX_RETRIES,
+        RATE_LIMIT_DELAY,
+        REQUEST_TIMEOUT,
+        RETRY_DELAY_SECONDS,
+        USER_AGENT,
+    )
+    from ..models import CardProduct, EarningRule
+except ImportError:
+    # Fallback for flat structure (Render): add root to path
+    import sys
+    from pathlib import Path
+    current_file = Path(__file__).resolve()
+    # Go up 2 levels: scrapers/base.py -> root
+    root_dir = current_file.parent.parent
+    if str(root_dir) not in sys.path:
+        sys.path.insert(0, str(root_dir))
+    from config import (
+        MAX_RETRIES,
+        RATE_LIMIT_DELAY,
+        REQUEST_TIMEOUT,
+        RETRY_DELAY_SECONDS,
+        USER_AGENT,
+    )
+    from models import CardProduct, EarningRule
+
 from .cache import ScraperCache
 
 logger = logging.getLogger(__name__)
