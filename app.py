@@ -42,18 +42,24 @@ def scrape_all_cards_and_rules():
     
     try:
         logger.info("Running scraper_job.py directly...")
-        # Set PYTHONPATH to include both current and parent directories
+        # Set PYTHONPATH to include parent directory so credit_card_optimizer is recognized as package
         # This allows scrapers to use relative imports (from ...models)
         env = os.environ.copy()
         pythonpath_parts = []
+        # Add parent directory first so credit_card_optimizer package is found
         if parent_dir:
             pythonpath_parts.append(parent_dir)
+        # Add current directory for direct imports
         if current_dir:
             pythonpath_parts.append(current_dir)
+        # Preserve existing PYTHONPATH
         existing_pythonpath = env.get('PYTHONPATH', '')
         if existing_pythonpath:
             pythonpath_parts.append(existing_pythonpath)
         env['PYTHONPATH'] = os.pathsep.join(pythonpath_parts)
+        
+        logger.info(f"PYTHONPATH set to: {env['PYTHONPATH']}")
+        logger.info(f"Running from: {current_dir}")
         
         # Run scraper_job.py directly as a script
         result = subprocess.run(
@@ -80,52 +86,6 @@ def scrape_all_cards_and_rules():
         return False
     except Exception as e:
         logger.error(f"❌ Failed to run scraper job: {e}", exc_info=True)
-        return False
-        
-        logger.info("Starting card and rule scraping job...")
-        
-        all_cards = []
-        all_rules = []
-        
-        scrapers = [
-            ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        ]
-        
-        for scraper in scrapers:
-            try:
-                logger.info(f"Scraping {scraper.issuer_name}...")
-                cards = scraper.scrape_cards()
-                all_cards.extend(cards)
-                logger.info(f"  Found {len(cards)} cards")
-                
-                for card in cards:
-                    try:
-                        rules = scraper.scrape_earning_rules(card)
-                        all_rules.extend(rules)
-                    except Exception as e:
-                        logger.warning(f"  Failed to get rules for {card.name}: {e}")
-            except Exception as e:
-                logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
-        
-        # Save to disk
-        try:
-            _data_manager.save_cards_and_rules(all_cards, all_rules)
-            logger.info(f"✅ Successfully scraped and saved {len(all_cards)} cards and {len(all_rules)} rules")
-            return True
-        except Exception as e:
-            logger.error(f"❌ Failed to save data: {e}", exc_info=True)
-            return False
-    except Exception as e:
-        logger.error(f"Failed to import scrapers: {e}", exc_info=True)
         return False
 
 # Now import api components
