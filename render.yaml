@@ -3,7 +3,7 @@ services:
     name: credit-card-optimizer
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: PYTHONPATH=/opt/render/project/src:$PYTHONPATH python -m credit_card_optimizer.api
+    startCommand: chmod +x start.sh && ./start.sh
     envVars:
       - key: USE_CACHE
         value: true
@@ -11,6 +11,6 @@ services:
         value: false
       - key: PYTHONUNBUFFERED
         value: "1"
-      - key: PORT
-        sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
 
