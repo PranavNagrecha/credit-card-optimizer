@@ -75,22 +75,38 @@ class NerdWalletScraper(BaseScraper):
         "rewards": RewardType.POINTS_PER_DOLLAR,
     }
     
-    # Issuer name mapping
+    # Issuer name mapping - ordered by specificity (longer/more specific first)
     ISSUER_MAP = {
-        "chase": "Chase",
+        # Full names first (most specific)
         "american express": "American Express",
-        "amex": "American Express",
-        "citi": "Citi",
-        "citibank": "Citi",
-        "capital one": "Capital One",
         "bank of america": "Bank of America",
-        "boa": "Bank of America",
-        "discover": "Discover",
-        "us bank": "U.S. Bank",
-        "wells fargo": "Wells Fargo",
-        "barclays": "Barclays",
+        "capital one": "Capital One",
         "goldman sachs": "Goldman Sachs",
+        "wells fargo": "Wells Fargo",
+        "us bank": "U.S. Bank",
+        # Abbreviations and variations
+        "amex": "American Express",
+        "boa": "Bank of America",
+        "citibank": "Citi",
+        "barclays": "Barclays",
+        "barclay": "Barclays",  # Common misspelling
+        # Single word issuers
+        "chase": "Chase",
+        "citi": "Citi",
+        "discover": "Discover",
         "apple": "Goldman Sachs",  # Apple Card is issued by Goldman Sachs
+        # Co-branded card issuers (for URL detection)
+        "united": "Chase",  # United cards are issued by Chase
+        "delta": "American Express",  # Delta cards are issued by Amex
+        "southwest": "Chase",  # Southwest cards are issued by Chase
+        "marriott": "Chase",  # Marriott cards are issued by Chase
+        "hilton": "American Express",  # Hilton cards are issued by Amex
+        "hyatt": "Chase",  # Hyatt cards are issued by Chase
+        "ihg": "Chase",  # IHG cards are issued by Chase
+        "jetblue": "Barclays",  # JetBlue cards are issued by Barclays
+        "alaska": "Bank of America",  # Alaska Airlines cards are issued by BoA
+        "american airlines": "Citi",  # AA cards are issued by Citi
+        "aadvantage": "Citi",  # AA cards are issued by Citi
     }
     
     # Issuer website URLs
@@ -269,14 +285,66 @@ class NerdWalletScraper(BaseScraper):
         return None
     
     def _extract_issuer_from_text(self, text: str) -> Optional[str]:
-        """Extract issuer name from text."""
+        """Extract issuer name from text.
+        
+        Uses word boundary matching to avoid false positives.
+        For example, "chase" in "chase sapphire" should match, but not "chase" in "purchase".
+        """
         if not text:
             return None
         
         text_lower = text.lower()
-        for key, issuer in self.ISSUER_MAP.items():
-            if key in text_lower:
-                return issuer
+        
+        # Sort by length (longest first) to match most specific first
+        sorted_issuers = sorted(self.ISSUER_MAP.items(), key=lambda x: len(x[0]), reverse=True)
+        
+        for key, issuer in sorted_issuers:
+            # Use word boundary matching for single-word issuers
+            if len(key.split()) == 1:
+                # Single word: use word boundaries to avoid false matches
+                pattern = r'\b' + re.escape(key) + r'\b'
+                if re.search(pattern, text_lower):
+                    return issuer
+            else:
+                # Multi-word: simple substring match (already specific enough)
+                if key in text_lower:
+                    return issuer
+        
+        return None
+    
+    def _extract_issuer_from_url(self, url: str) -> Optional[str]:
+        """Extract issuer name from NerdWallet URL slug.
+        
+        NerdWallet URLs are like: /reviews/credit-cards/chase-sapphire-preferred
+        The issuer is usually the first part(s) of the slug.
+        """
+        if not url:
+            return None
+        
+        # Extract slug from URL
+        match = re.search(r'/reviews/credit-cards/([^/?#]+)', url)
+        if not match:
+            return None
+        
+        slug = match.group(1).lower()
+        
+        # Split slug into parts
+        parts = slug.split('-')
+        if not parts:
+            return None
+        
+        # Check if first part(s) match an issuer (try longest combinations first)
+        # Try 2-word combinations first (e.g., "american-express", "capital-one")
+        for i in range(min(3, len(parts)), 0, -1):  # Try 3-word, 2-word, then 1-word
+            potential_issuer = '-'.join(parts[:i])
+            if potential_issuer in self.ISSUER_MAP:
+                return self.ISSUER_MAP[potential_issuer]
+        
+        # Also check individual words in the slug (for single-word issuers)
+        for part in parts[:3]:  # Check first 3 parts
+            if part in self.ISSUER_MAP:
+                return self.ISSUER_MAP[part]
+        
         return None
     
     def _extract_network_from_text(self, text: str) -> Optional[CardNetwork]:
@@ -607,9 +675,32 @@ class NerdWalletScraper(BaseScraper):
             
             # Try extracting from URL as last resort
             if not card_name:
-                url_match = re.search(r'/reviews/credit-cards/([^/]+)', url)
+                url_match = re.search(r'/reviews/credit-cards/([^/?#]+)', url)
                 if url_match:
-                    card_name = url_match.group(1).replace('-', ' ').title()
+                    slug = url_match.group(1)
+                    # Convert slug to readable name, but remove issuer prefix if present
+                    parts = slug.split('-')
+                    # Remove common issuer prefixes (check for multi-word first)
+                    issuer_prefixes = [
+                        'american-express', 'capital-one', 'bank-of-america', 'wells-fargo', 'us-bank',
+                        'chase', 'amex', 'citi', 'discover', 'barclays', 'apple', 'goldman-sachs'
+                    ]
+                    # Check for 2-word prefix first
+                    if len(parts) >= 2:
+                        two_word_prefix = '-'.join(parts[:2])
+                        if two_word_prefix in issuer_prefixes:
+                            parts = parts[2:]  # Remove 2-word issuer prefix
+                    # Check for 1-word prefix
+                    elif len(parts) >= 1 and parts[0] in issuer_prefixes:
+                        parts = parts[1:]  # Remove issuer prefix
+                    
+                    if parts:
+                        card_name = ' '.join(parts).title()
+                        logger.debug(f"Extracted card name from URL slug: {card_name}")
+                    else:
+                        # If all parts were issuer, use slug as-is
+                        card_name = slug.replace('-', ' ').title()
+                        logger.debug(f"Using full slug as card name: {card_name}")
             
             if not card_name:
                 logger.warning(f"Could not extract card name from {url}, trying fallback methods...")
@@ -684,25 +775,35 @@ class NerdWalletScraper(BaseScraper):
                 if annual_fee == 0.0:
                     annual_fee = self._parse_annual_fee(page_text)
             
-            # Extract issuer
+            # Extract issuer - prioritize URL slug (most reliable), then card name, then page content
             issuer_name = "Unknown"
             issuer_url = ""
             
-            # Look for issuer mentions
-            issuer_sections = soup.find_all(string=re.compile(r'issued\s+by|from\s+\w+|by\s+\w+', re.I))
-            for section in issuer_sections:
-                issuer = self._extract_issuer_from_text(section)
-                if issuer:
-                    issuer_name = issuer
-                    issuer_url = self.ISSUER_URLS.get(issuer, "")
-                    break
+            # Strategy 1: Extract from URL slug (most reliable for NerdWallet)
+            issuer = self._extract_issuer_from_url(url)
+            if issuer:
+                issuer_name = issuer
+                issuer_url = self.ISSUER_URLS.get(issuer, "")
+                logger.debug(f"Extracted issuer '{issuer_name}' from URL slug")
             
-            # If not found, try to extract from URL or card name
+            # Strategy 2: Extract from card name (if URL didn't work)
             if issuer_name == "Unknown":
                 issuer = self._extract_issuer_from_text(card_name)
                 if issuer:
                     issuer_name = issuer
                     issuer_url = self.ISSUER_URLS.get(issuer, "")
+                    logger.debug(f"Extracted issuer '{issuer_name}' from card name")
+            
+            # Strategy 3: Look for explicit issuer mentions in page content (least reliable)
+            if issuer_name == "Unknown":
+                issuer_sections = soup.find_all(string=re.compile(r'issued\s+by|from\s+\w+|by\s+\w+', re.I))
+                for section in issuer_sections:
+                    issuer = self._extract_issuer_from_text(section)
+                    if issuer:
+                        issuer_name = issuer
+                        issuer_url = self.ISSUER_URLS.get(issuer, "")
+                        logger.debug(f"Extracted issuer '{issuer_name}' from page content")
+                        break
             
             # Extract network
             # Default based on issuer (Chase/Citi/Capital One = Visa, Amex = Amex, etc.)
