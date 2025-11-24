@@ -29,24 +29,36 @@ from data_manager import DataManager
 from engine import find_best_cards_for_query
 from models import CardProduct, EarningRule
 
-# For scraper_job, we run it as a module to avoid import issues
+# For scraper_job, we run it directly but need to handle imports properly
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
     import subprocess
     
+    scraper_script = os.path.join(current_dir, "scraper_job.py")
+    
+    if not os.path.exists(scraper_script):
+        logger.error(f"scraper_job.py not found at {scraper_script}")
+        return False
+    
     try:
-        logger.info("Running scraper_job as module...")
-        # Set PYTHONPATH to include parent directory so package imports work
+        logger.info("Running scraper_job.py directly...")
+        # Set PYTHONPATH to include both current and parent directories
+        # This allows scrapers to use relative imports (from ...models)
         env = os.environ.copy()
-        pythonpath = env.get('PYTHONPATH', '')
-        if parent_dir not in pythonpath.split(os.pathsep):
-            env['PYTHONPATH'] = f"{parent_dir}{os.pathsep}{pythonpath}" if pythonpath else parent_dir
+        pythonpath_parts = []
+        if parent_dir:
+            pythonpath_parts.append(parent_dir)
+        if current_dir:
+            pythonpath_parts.append(current_dir)
+        existing_pythonpath = env.get('PYTHONPATH', '')
+        if existing_pythonpath:
+            pythonpath_parts.append(existing_pythonpath)
+        env['PYTHONPATH'] = os.pathsep.join(pythonpath_parts)
         
-        # Run as module: python -m credit_card_optimizer.scraper_job
-        # This ensures relative imports in scrapers work correctly
+        # Run scraper_job.py directly as a script
         result = subprocess.run(
-            [sys.executable, "-m", "credit_card_optimizer.scraper_job"],
-            cwd=parent_dir,  # Run from parent directory so package is found
+            [sys.executable, scraper_script],
+            cwd=current_dir,
             env=env,
             capture_output=True,
             text=True,
