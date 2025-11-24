@@ -182,8 +182,19 @@ class NerdWalletScraper(BaseScraper):
                     # For points/miles cards, "x" means multiplier (3x = 3 points per dollar)
                     if '%' in match.group(0) or (reward_type == RewardType.CASHBACK_PERCENT and 'x' in match.group(0)):
                         # This is a percentage - validate range
-                        if 0 <= value <= 10:  # Max 10% cashback is reasonable
+                        # Real cashback cards: max 6% (except special 5% rotating categories)
+                        # Anything over 10% is definitely wrong (likely from comparison tables)
+                        if 0 <= value <= 6:  # Max 6% cashback is realistic
                             return value
+                        elif 6 < value <= 10:
+                            # Between 6-10%: might be legitimate (e.g., special promotions)
+                            # But log it for review
+                            logger.debug(f"Found high cashback rate {value}% - may need validation")
+                            return value
+                        else:
+                            # Over 10%: definitely wrong, skip it
+                            logger.warning(f"Skipping impossible cashback rate {value}%")
+                            return 1.0  # Return default instead
                     else:
                         # This is a multiplier for points/miles - validate range
                         if 0 <= value <= 15:  # Max 15x points is reasonable
@@ -847,6 +858,16 @@ class NerdWalletScraper(BaseScraper):
             for section in all_sections:
                 text = section.get_text()
                 
+                # Skip marketing/comparison sections
+                text_lower = text.lower()
+                skip_phrases = [
+                    'compare', 'comparison', 'vs', 'versus', 'better than', 'best for',
+                    'prominent brands', 'heard of', 'advertisement', 'ad', 'sponsored',
+                    'sign up bonus', 'welcome bonus', 'introductory offer', 'new cardmember'
+                ]
+                if any(phrase in text_lower for phrase in skip_phrases):
+                    continue  # Skip marketing/comparison text
+                
                 # Look for multiplier patterns (pass reward type for correct interpretation)
                 multiplier = self._parse_multiplier(text, card.type)
                 if multiplier <= 1.0:
@@ -854,8 +875,17 @@ class NerdWalletScraper(BaseScraper):
                 
                 # Additional validation: filter out obviously wrong values
                 if card.type == RewardType.CASHBACK_PERCENT and multiplier > 10:
-                    logger.warning(f"Skipping suspicious cashback rate {multiplier}% for {card.name}")
+                    logger.warning(f"Skipping suspicious cashback rate {multiplier}% for {card.name} (text: {text[:100]})")
                     continue
+                
+                # For cashback cards, validate against known maximums
+                # Real cashback cards rarely exceed 6% (except special promotions)
+                if card.type == RewardType.CASHBACK_PERCENT and multiplier > 6:
+                    # Only allow if it's a well-known high cashback card (like 5% rotating)
+                    # But 20% is definitely wrong - skip it
+                    if multiplier >= 15:
+                        logger.warning(f"Skipping impossible cashback rate {multiplier}% for {card.name}")
+                        continue
                 
                 # Extract categories
                 categories = self._extract_categories(text)
@@ -903,9 +933,17 @@ class NerdWalletScraper(BaseScraper):
                         else:
                             multiplier = raw_multiplier  # 3x = 3 points for points cards
                         
+                        # Skip marketing/comparison text
+                        if any(phrase in category_text.lower() for phrase in ['prominent brands', 'heard of', 'compare', 'vs']):
+                            continue
+                        
                         # Validate multiplier
                         if card.type == RewardType.CASHBACK_PERCENT and multiplier > 10:
                             logger.warning(f"Skipping suspicious cashback rate {multiplier}% for {card.name}")
+                            continue
+                        # For cashback, anything over 6% is suspicious (except known 5% rotating cards)
+                        if card.type == RewardType.CASHBACK_PERCENT and multiplier >= 15:
+                            logger.warning(f"Skipping impossible cashback rate {multiplier}% for {card.name}")
                             continue
                         if multiplier <= 1.0:
                             continue  # Skip low multipliers
