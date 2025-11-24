@@ -119,15 +119,26 @@ def find_best_cards_for_query(
         # Convert cents per dollar to percentage for display
         effective_percent = adjusted_rate  # adjusted_rate is already in cents per dollar (e.g., 5.1 = 5.1%)
         
-        explanation = (
-            f"{card.name} offers {reward_type_desc} "
-            f"({effective_percent:.2f}% effective value) for {rule.description}"
-        )
+        # Build explanation with rotating category warning
+        if rule.is_rotating:
+            explanation = (
+                f"{card.name} offers {reward_type_desc} "
+                f"({effective_percent:.2f}% effective value) on ROTATING QUARTERLY CATEGORIES "
+                f"that change each quarter. Categories may include: {', '.join(rule.merchant_categories) if rule.merchant_categories else 'varies by quarter'}. "
+                f"Activation required each quarter."
+            )
+        else:
+            explanation = (
+                f"{card.name} offers {reward_type_desc} "
+                f"({effective_percent:.2f}% effective value) for {rule.description}"
+            )
         
         # Add notes
         notes = cap_notes.copy()
         if rule.is_rotating:
-            notes.append("Rotating category - may require activation")
+            notes.append("⚠️ ROTATING QUARTERLY CATEGORY - Categories change each quarter and require activation")
+            if rule.merchant_categories:
+                notes.append(f"Possible categories: {', '.join(rule.merchant_categories)}")
         if rule.is_intro_offer_only:
             notes.append("Introductory offer - limited time")
         if rule.stacking_rules:

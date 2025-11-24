@@ -909,8 +909,13 @@ class NerdWalletScraper(BaseScraper):
                 cap = self._parse_cap(text)
                 caps = [cap] if cap else []
                 
-                # Check for rotating categories
-                is_rotating = bool(re.search(r'rotating|quarterly|changes', text.lower()))
+                # Check for rotating categories - be more thorough
+                rotating_keywords = [
+                    'rotating', 'quarterly', 'changes', 'each quarter', 'per quarter',
+                    'activate', 'enrollment required', 'select categories', 'bonus categories',
+                    'different places', 'different categories', 'changes quarterly'
+                ]
+                is_rotating = any(keyword in text.lower() for keyword in rotating_keywords)
                 
                 # Create earning rule
                 rule = EarningRule(
@@ -967,6 +972,14 @@ class NerdWalletScraper(BaseScraper):
                         cap = self._parse_cap(category_text)
                         caps = [cap] if cap else []
                         
+                        # Check for rotating categories in the category text
+                        rotating_keywords = [
+                            'rotating', 'quarterly', 'changes', 'each quarter', 'per quarter',
+                            'activate', 'enrollment', 'select categories', 'bonus categories',
+                            'different places', 'different categories'
+                        ]
+                        is_rotating = any(keyword in category_text.lower() for keyword in rotating_keywords)
+                        
                         rule = EarningRule(
                             card_id=card.id,
                             description=f"{multiplier}{'%' if card.type == RewardType.CASHBACK_PERCENT else 'x'} on {category_text.strip()}",
@@ -974,6 +987,7 @@ class NerdWalletScraper(BaseScraper):
                             multiplier=multiplier,
                             caps=caps,
                             reward_type=card.type,
+                            is_rotating=is_rotating,
                         )
                         rules.append(rule)
             

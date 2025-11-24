@@ -521,6 +521,15 @@
                             ${card.reward_program ? `<br><strong>Reward Program:</strong> ${card.reward_program.name}` : ''}
                         </div>
                         <div class="card-explanation">${cardScore.explanation}</div>
+                        ${cardScore.is_rotating ? `
+                            <div style="margin: 10px 0; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
+                                <strong style="color: #856404;">🔄 Rotating Quarterly Category</strong>
+                                <p style="margin: 5px 0 0 0; color: #856404; font-size: 0.9em;">
+                                    This is a rotating category that changes each quarter. You must activate it each quarter to earn the bonus rate. 
+                                    The current quarter's categories may differ from what's shown.
+                                </p>
+                            </div>
+                        ` : ''}
                         ${cardScore.notes && cardScore.notes.length > 0 ? `
                             <div class="card-notes">
                                 <strong style="color: #666; font-size: 0.9em;">Important Notes:</strong>

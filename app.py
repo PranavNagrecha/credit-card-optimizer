@@ -271,6 +271,7 @@ class CardScoreResponse(BaseModel):
     effective_rate_cents_per_dollar: float
     explanation: str
     notes: List[str] = Field(default_factory=list)
+    is_rotating: bool = False
 
 class RecommendationResponse(BaseModel):
     merchant_query: str
@@ -414,7 +415,8 @@ async def get_recommendation(
                     card=card_to_response(card_score.card),
                     effective_rate_cents_per_dollar=card_score.effective_rate_cents_per_dollar,
                     explanation=card_score.explanation,
-                    notes=card_score.notes or []
+                    notes=card_score.notes or [],
+                    is_rotating=card_score.matching_rule.is_rotating if card_score.matching_rule else False
                 )
                 for card_score in filtered_cards
             ],
