@@ -121,6 +121,10 @@ class NerdWalletScraper(BaseScraper):
         "Wells Fargo": "https://www.wellsfargo.com",
         "Barclays": "https://www.barclaysus.com",
         "Goldman Sachs": "https://www.goldmansachs.com",
+        "Alliant Credit Union": "https://www.alliantcreditunion.org",
+        "Fidelity": "https://www.fidelity.com",
+        "Synchrony Bank": "https://www.synchrony.com",
+        "TD Bank": "https://www.td.com",
     }
     
     def __init__(self, use_cache: bool = True, offline_mode: bool = False, use_selenium: bool = True):
@@ -334,11 +338,16 @@ class NerdWalletScraper(BaseScraper):
             return None
         
         # Check if first part(s) match an issuer (try longest combinations first)
-        # Try 2-word combinations first (e.g., "american-express", "capital-one")
-        for i in range(min(3, len(parts)), 0, -1):  # Try 3-word, 2-word, then 1-word
-            potential_issuer = '-'.join(parts[:i])
-            if potential_issuer in self.ISSUER_MAP:
-                return self.ISSUER_MAP[potential_issuer]
+        # Try 3-word, 2-word, then 1-word combinations
+        for i in range(min(3, len(parts)), 0, -1):
+            potential_issuer_hyphen = '-'.join(parts[:i])
+            potential_issuer_space = ' '.join(parts[:i])
+            
+            # Check both hyphen and space versions
+            if potential_issuer_hyphen in self.ISSUER_MAP:
+                return self.ISSUER_MAP[potential_issuer_hyphen]
+            if potential_issuer_space in self.ISSUER_MAP:
+                return self.ISSUER_MAP[potential_issuer_space]
         
         # Also check individual words in the slug (for single-word issuers)
         for part in parts[:3]:  # Check first 3 parts
