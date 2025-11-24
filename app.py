@@ -265,6 +265,7 @@ class CardResponse(BaseModel):
     foreign_transaction_fee: float
     reward_program: Optional[RewardProgramResponse] = None
     official_url: Optional[str] = None
+    is_business_card: bool = False
 
 class CardScoreResponse(BaseModel):
     card: CardResponse
@@ -298,7 +299,8 @@ def card_to_response(card: CardProduct) -> CardResponse:
             base_point_value_cents=card.reward_program.base_point_value_cents,
             notes=card.reward_program.notes
         ) if card.reward_program else None,
-        official_url=card.official_url
+        official_url=card.official_url,
+        is_business_card=card.is_business_card
     )
 
 @app.get("/", tags=["Health"])
