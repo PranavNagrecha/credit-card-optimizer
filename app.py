@@ -43,10 +43,17 @@ def scrape_all_cards_and_rules():
     
     try:
         logger.info("Running scraper_job.py as subprocess...")
+        # Set PYTHONPATH to include parent directory so package imports work
+        env = os.environ.copy()
+        pythonpath = env.get('PYTHONPATH', '')
+        if parent_dir not in pythonpath.split(os.pathsep):
+            env['PYTHONPATH'] = f"{parent_dir}{os.pathsep}{pythonpath}" if pythonpath else parent_dir
+        
         # Run the scraper job
         result = subprocess.run(
             [sys.executable, scraper_script],
             cwd=current_dir,
+            env=env,
             capture_output=True,
             text=True,
             timeout=600  # 10 minute timeout
