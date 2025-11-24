@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from .models import CardProduct, EarningRule
+from models import CardProduct, EarningRule
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ class DataManager:
     
     def _dict_to_card(self, card_dict: dict) -> CardProduct:
         """Convert dictionary to CardProduct."""
-        from .models import CardIssuer, RewardProgram, CardNetwork, RewardType
+        from models import CardIssuer, RewardProgram, CardNetwork, RewardType
         
         issuer_data = card_dict["issuer"]
         issuer = CardIssuer(
@@ -234,7 +234,7 @@ class DataManager:
     
     def _dict_to_rule(self, rule_dict: dict) -> EarningRule:
         """Convert dictionary to EarningRule."""
-        from .models import Cap, RewardType
+        from models import Cap, RewardType
         
         caps = [
             Cap(

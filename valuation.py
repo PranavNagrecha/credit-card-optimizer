@@ -7,8 +7,8 @@ Converts all reward types (cashback, points, miles) to a standardized
 
 from typing import Optional
 
-from .config import POINT_VALUES
-from .models import EarningRule, RewardProgram, RewardType
+from config import POINT_VALUES
+from models import EarningRule, RewardProgram, RewardType
 
 
 def get_point_value(reward_program: Optional[RewardProgram]) -> float:

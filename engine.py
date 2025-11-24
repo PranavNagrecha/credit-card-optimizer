@@ -7,19 +7,19 @@ and generates recommendations.
 
 from typing import List
 
-from .models import (
+from models import (
     CardProduct,
     CardScore,
     ComputedRecommendation,
     EarningRule,
+    RewardType,
 )
-from .normalization import (
+from normalization import (
     get_categories_for_mcc,
     match_categories,
     resolve_merchant_query,
 )
-from .valuation import apply_cap_penalty, compute_effective_rate, get_point_value
-from .models import RewardType
+from valuation import apply_cap_penalty, compute_effective_rate, get_point_value
 
 
 def find_best_cards_for_query(

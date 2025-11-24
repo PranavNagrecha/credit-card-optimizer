@@ -8,8 +8,8 @@ and MCC codes for matching against earning rules.
 import re
 from typing import List, Optional
 
-from .config import CATEGORY_SYNONYMS
-from .models import MerchantCategoryMapping
+from config import CATEGORY_SYNONYMS
+from models import MerchantCategoryMapping
 
 
 # Known merchant mappings (can be expanded)
