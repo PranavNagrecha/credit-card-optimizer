@@ -29,30 +29,24 @@ from data_manager import DataManager
 from engine import find_best_cards_for_query
 from models import CardProduct, EarningRule
 
-# For scraper_job, we run it as a subprocess to avoid import issues
+# For scraper_job, we run it as a module to avoid import issues
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
     import subprocess
     
-    # Run scraper_job.py as a subprocess - it handles imports correctly
-    scraper_script = os.path.join(current_dir, "scraper_job.py")
-    
-    if not os.path.exists(scraper_script):
-        logger.error(f"scraper_job.py not found at {scraper_script}")
-        return False
-    
     try:
-        logger.info("Running scraper_job.py as subprocess...")
+        logger.info("Running scraper_job as module...")
         # Set PYTHONPATH to include parent directory so package imports work
         env = os.environ.copy()
         pythonpath = env.get('PYTHONPATH', '')
         if parent_dir not in pythonpath.split(os.pathsep):
             env['PYTHONPATH'] = f"{parent_dir}{os.pathsep}{pythonpath}" if pythonpath else parent_dir
         
-        # Run the scraper job
+        # Run as module: python -m credit_card_optimizer.scraper_job
+        # This ensures relative imports in scrapers work correctly
         result = subprocess.run(
-            [sys.executable, scraper_script],
-            cwd=current_dir,
+            [sys.executable, "-m", "credit_card_optimizer.scraper_job"],
+            cwd=parent_dir,  # Run from parent directory so package is found
             env=env,
             capture_output=True,
             text=True,
