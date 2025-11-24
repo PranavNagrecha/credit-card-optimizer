@@ -95,6 +95,14 @@ class NerdWalletScraper(BaseScraper):
         "citi": "Citi",
         "discover": "Discover",
         "apple": "Goldman Sachs",  # Apple Card is issued by Goldman Sachs
+        # Third-party/co-branded issuers
+        "alliant": "Alliant Credit Union",
+        "fidelity": "Fidelity",
+        "paypal": "Synchrony Bank",  # PayPal cards are issued by Synchrony
+        "synchrony": "Synchrony Bank",
+        "target": "TD Bank",  # Target RedCard is issued by TD Bank
+        "td bank": "TD Bank",
+        "td": "TD Bank",
         # Co-branded card issuers (for URL detection)
         "united": "Chase",  # United cards are issued by Chase
         "delta": "American Express",  # Delta cards are issued by Amex
