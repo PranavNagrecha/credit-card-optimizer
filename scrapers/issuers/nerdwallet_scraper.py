@@ -832,10 +832,15 @@ class NerdWalletScraper(BaseScraper):
             for section in all_sections:
                 text = section.get_text()
                 
-                # Look for multiplier patterns
-                multiplier = self._parse_multiplier(text)
+                # Look for multiplier patterns (pass reward type for correct interpretation)
+                multiplier = self._parse_multiplier(text, card.type)
                 if multiplier <= 1.0:
                     continue  # Skip if no meaningful multiplier
+                
+                # Additional validation: filter out obviously wrong values
+                if card.type == RewardType.CASHBACK_PERCENT and multiplier > 10:
+                    logger.warning(f"Skipping suspicious cashback rate {multiplier}% for {card.name}")
+                    continue
                 
                 # Extract categories
                 categories = self._extract_categories(text)
@@ -873,8 +878,22 @@ class NerdWalletScraper(BaseScraper):
                 for pattern in reward_patterns:
                     matches = re.finditer(pattern, page_text, re.IGNORECASE)
                     for match in matches:
-                        multiplier = float(match.group(1))
+                        raw_multiplier = float(match.group(1))
                         category_text = match.group(2)
+                        
+                        # For cashback cards, "x" in pattern means percentage
+                        # For points cards, "x" means multiplier
+                        if card.type == RewardType.CASHBACK_PERCENT and 'x' in match.group(0):
+                            multiplier = raw_multiplier  # 6x = 6% for cashback
+                        else:
+                            multiplier = raw_multiplier  # 3x = 3 points for points cards
+                        
+                        # Validate multiplier
+                        if card.type == RewardType.CASHBACK_PERCENT and multiplier > 10:
+                            logger.warning(f"Skipping suspicious cashback rate {multiplier}% for {card.name}")
+                            continue
+                        if multiplier <= 1.0:
+                            continue  # Skip low multipliers
                         
                         categories = self._extract_categories(category_text)
                         cap = self._parse_cap(category_text)
@@ -882,7 +901,7 @@ class NerdWalletScraper(BaseScraper):
                         
                         rule = EarningRule(
                             card_id=card.id,
-                            description=f"{multiplier}x on {category_text.strip()}",
+                            description=f"{multiplier}{'%' if card.type == RewardType.CASHBACK_PERCENT else 'x'} on {category_text.strip()}",
                             merchant_categories=categories,
                             multiplier=multiplier,
                             caps=caps,
