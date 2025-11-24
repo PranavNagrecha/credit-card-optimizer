@@ -3,7 +3,7 @@ services:
     name: credit-card-optimizer
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn credit_card_optimizer.api:app --host 0.0.0.0 --port $PORT
+    startCommand: PYTHONPATH=/opt/render/project/src:$PYTHONPATH python -m credit_card_optimizer.api
     envVars:
       - key: USE_CACHE
         value: true
@@ -11,4 +11,6 @@ services:
         value: false
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: PORT
+        sync: false
 
