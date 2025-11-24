@@ -78,17 +78,27 @@ def find_best_cards_for_query(
         )
         
         # Check merchant name match
-        merchant_match = (
-            merchant_mapping.merchant_name and
-            any(
-                merchant.lower() in merchant_mapping.merchant_name.lower() or
-                merchant_mapping.merchant_name.lower() in merchant.lower()
-                for merchant in rule.merchant_names
-            )
-        )
+        merchant_match = False
+        if merchant_mapping.merchant_name and rule.merchant_names:
+            merchant_lower = merchant_mapping.merchant_name.lower()
+            for rule_merchant in rule.merchant_names:
+                rule_merchant_lower = rule_merchant.lower()
+                # Exact match or contains match
+                if (merchant_lower == rule_merchant_lower or
+                    merchant_lower in rule_merchant_lower or
+                    rule_merchant_lower in merchant_lower):
+                    merchant_match = True
+                    break
         
-        if not (category_match or mcc_match or merchant_match):
-            continue
+        # If rule has specific merchant_names, it should ONLY match those merchants
+        # Don't match by category if rule is merchant-specific
+        if rule.merchant_names:
+            if not merchant_match:
+                continue  # Skip this rule - it's merchant-specific and doesn't match
+        else:
+            # Rule applies to categories, check category match
+            if not (category_match or mcc_match):
+                continue
         
         # Compute effective rate
         effective_rate = compute_effective_rate(rule, card.reward_program)

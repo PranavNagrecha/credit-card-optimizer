@@ -362,14 +362,27 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             "foreign_transaction_fee": 0.0,
             "earning_rules": [
                 {
-                    "description": "Dining, entertainment, and streaming",
-                    "categories": ["restaurants", "entertainment"],
+                    "description": "Dining, entertainment, and streaming services",
+                    "categories": ["restaurants", "entertainment", "streaming"],
                     "multiplier": 3.0,
                 },
                 {
-                    "description": "Groceries",
+                    "description": "Groceries (not including Walmart and Target)",
                     "categories": ["groceries"],
                     "multiplier": 3.0,
+                },
+                {
+                    "description": "Hotels, vacation rentals and rental cars booked through Capital One Travel",
+                    "categories": ["travel"],
+                    "merchant_names": ["Capital One Travel"],
+                    "multiplier": 5.0,
+                    "stacking_rules": "Must book through Capital One Travel portal",
+                },
+                {
+                    "description": "Capital One Entertainment purchases",
+                    "merchant_names": ["Capital One Entertainment"],
+                    "multiplier": 8.0,
+                    "stacking_rules": "Only applies to purchases through Capital One Entertainment portal",
                 },
                 {
                     "description": "All other purchases",
