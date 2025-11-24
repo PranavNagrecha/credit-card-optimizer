@@ -356,7 +356,10 @@ async def refresh_data():
 @app.get("/api/recommend", response_model=RecommendationResponse, tags=["Recommendations"])
 async def get_recommendation(
     query: str = Query(..., description="Merchant name or category"),
-    max_results: int = Query(MAX_RECOMMENDATIONS, ge=1, le=20, description="Maximum number of recommendations")
+    max_results: int = Query(MAX_RECOMMENDATIONS, ge=1, le=50, description="Maximum number of recommendations"),
+    issuer: Optional[str] = Query(None, description="Filter by issuer name (e.g., 'Chase', 'American Express')"),
+    reward_type: Optional[str] = Query(None, description="Filter by reward type: 'cashback', 'points', 'miles'"),
+    network: Optional[str] = Query(None, description="Filter by network: 'VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'")
 ):
     try:
         all_cards, all_rules = load_all_cards_and_rules()
@@ -365,8 +368,37 @@ async def get_recommendation(
             query=query,
             all_cards=all_cards,
             all_rules=all_rules,
-            max_results=max_results
+            max_results=max_results * 2  # Get more results, then filter
         )
+        
+        # Apply filters
+        filtered_cards = recommendation.candidate_cards
+        if issuer:
+            filtered_cards = [cs for cs in filtered_cards if issuer.lower() in cs.card.issuer.name.lower()]
+        if reward_type:
+            reward_type_map = {
+                'cashback': RewardType.CASHBACK_PERCENT,
+                'points': RewardType.POINTS_PER_DOLLAR,
+                'miles': RewardType.MILES_PER_DOLLAR
+            }
+            target_type = reward_type_map.get(reward_type.lower())
+            if target_type:
+                filtered_cards = [cs for cs in filtered_cards if cs.card.type == target_type]
+        if network:
+            from models import CardNetwork
+            network_map = {
+                'visa': CardNetwork.VISA,
+                'mastercard': CardNetwork.MASTERCARD,
+                'amex': CardNetwork.AMEX,
+                'american express': CardNetwork.AMEX,
+                'discover': CardNetwork.DISCOVER
+            }
+            target_network = network_map.get(network.lower())
+            if target_network:
+                filtered_cards = [cs for cs in filtered_cards if cs.card.network == target_network]
+        
+        # Limit to max_results after filtering
+        filtered_cards = filtered_cards[:max_results]
         
         return RecommendationResponse(
             merchant_query=recommendation.merchant_query,
@@ -378,7 +410,7 @@ async def get_recommendation(
                     explanation=card_score.explanation,
                     notes=card_score.notes or []
                 )
-                for card_score in recommendation.candidate_cards
+                for card_score in filtered_cards
             ],
             explanation=recommendation.explanation
         )

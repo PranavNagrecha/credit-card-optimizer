@@ -33,7 +33,7 @@ RETRY_DELAY_SECONDS = 2
 RATE_LIMIT_DELAY = 1.0  # Seconds to wait between requests
 
 # Recommendation settings
-MAX_RECOMMENDATIONS = 5
+MAX_RECOMMENDATIONS = 20  # Increased from 5 to show more cards
 DEFAULT_ANNUAL_FEE_WEIGHT = 0.0  # Set to > 0 to penalize annual fees in scoring
 
 # Caching settings

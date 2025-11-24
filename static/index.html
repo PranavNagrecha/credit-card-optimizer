@@ -454,7 +454,7 @@
             `;
             
             try {
-                const response = await fetch(`${API_URL}/recommend?query=${encodeURIComponent(query)}&max_results=5`);
+                const response = await fetch(`${API_URL}/recommend?query=${encodeURIComponent(query)}&max_results=50`);
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
@@ -462,6 +462,8 @@
                 }
                 
                 const data = await response.json();
+                // Store full results for client-side filtering
+                window.lastSearchResults = data;
                 displayResults(data);
             } catch (error) {
                 resultsDiv.innerHTML = `
@@ -540,6 +542,46 @@
             });
             
             resultsDiv.innerHTML = html;
+        }
+        
+        function applyFilters() {
+            if (!window.lastSearchResults) return;
+            
+            const issuerFilter = document.getElementById('filterIssuer')?.value || '';
+            const rewardTypeFilter = document.getElementById('filterRewardType')?.value || '';
+            const limitFilter = parseInt(document.getElementById('filterLimit')?.value || '20');
+            
+            const cards = document.querySelectorAll('#filteredResults .card');
+            let visibleCount = 0;
+            let index = 1;
+            
+            cards.forEach(card => {
+                const cardIssuer = card.getAttribute('data-issuer');
+                const cardRewardType = card.getAttribute('data-reward-type');
+                
+                const issuerMatch = !issuerFilter || cardIssuer === issuerFilter;
+                const rewardTypeMatch = !rewardTypeFilter || cardRewardType === rewardTypeFilter;
+                
+                if (issuerMatch && rewardTypeMatch && visibleCount < limitFilter) {
+                    card.style.display = 'block';
+                    // Update ranking number
+                    const nameDiv = card.querySelector('.card-name');
+                    if (nameDiv) {
+                        const originalText = nameDiv.textContent.replace(/^\d+\.\s*/, '');
+                        nameDiv.innerHTML = (index === 1 ? '🏆 ' : '') + `${index}. ${originalText}`;
+                    }
+                    visibleCount++;
+                    index++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Update result count
+            const resultCount = document.getElementById('resultCount');
+            if (resultCount) {
+                resultCount.textContent = `${visibleCount} of ${cards.length} cards`;
+            }
         }
         
         // Load status on page load
