@@ -155,16 +155,20 @@ class NerdWalletScraper(BaseScraper):
         
         return 0.0  # Default to $0 if not found
     
-    def _parse_multiplier(self, text: str) -> float:
-        """Parse reward multiplier from text."""
+    def _parse_multiplier(self, text: str, reward_type: Optional[RewardType] = None) -> float:
+        """Parse reward multiplier from text.
+        
+        For cashback cards: "6%" or "6x" means 6% cashback
+        For points cards: "3x" means 3 points per dollar
+        """
         if not text:
             return 1.0
         
         # Look for patterns like "3x", "5%", "2 points per dollar"
         patterns = [
-            r'(\d+(?:\.\d+)?)\s*x\b',  # 3x, 2.5x
-            r'(\d+(?:\.\d+)?)\s*%',  # 5%, 1.5%
-            r'(\d+(?:\.\d+)?)\s*(?:points?|miles?|percent|%)\s*(?:per|for|on)',
+            r'(\d+(?:\.\d+)?)\s*%',  # 5%, 1.5% - always percentage
+            r'(\d+(?:\.\d+)?)\s*x\b',  # 3x, 2.5x - depends on reward type
+            r'(\d+(?:\.\d+)?)\s*(?:points?|miles?|percent)\s*(?:per|for|on)',
             r'earn\s+(\d+(?:\.\d+)?)\s*(?:points?|miles?|%|percent)',
         ]
         
@@ -172,7 +176,18 @@ class NerdWalletScraper(BaseScraper):
             match = re.search(pattern, text.lower())
             if match:
                 try:
-                    return float(match.group(1))
+                    value = float(match.group(1))
+                    
+                    # For cashback cards, "x" means percentage (6x = 6%)
+                    # For points/miles cards, "x" means multiplier (3x = 3 points per dollar)
+                    if '%' in match.group(0) or (reward_type == RewardType.CASHBACK_PERCENT and 'x' in match.group(0)):
+                        # This is a percentage - validate range
+                        if 0 <= value <= 10:  # Max 10% cashback is reasonable
+                            return value
+                    else:
+                        # This is a multiplier for points/miles - validate range
+                        if 0 <= value <= 15:  # Max 15x points is reasonable
+                            return value
                 except (IndexError, ValueError):
                     continue
         
