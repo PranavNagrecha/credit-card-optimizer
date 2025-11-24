@@ -27,7 +27,7 @@ import models
 from config import MAX_RECOMMENDATIONS, OFFLINE_MODE, USE_CACHE
 from data_manager import DataManager
 from engine import find_best_cards_for_query
-from models import CardProduct, EarningRule
+from models import CardProduct, EarningRule, RewardType
 
 # For scraper_job, we run it directly with proper PYTHONPATH setup
 def scrape_all_cards_and_rules():
