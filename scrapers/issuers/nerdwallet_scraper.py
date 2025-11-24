@@ -420,55 +420,47 @@ class NerdWalletScraper(BaseScraper):
         # Comprehensive list of known cards on NerdWallet (100+ cards)
         # This list is built from known card reviews on NerdWallet
         known_card_slugs = [
-            # Chase (15+ cards)
+            # Chase (verified cards that exist on NerdWallet)
             "chase-sapphire-preferred", "chase-sapphire-reserve", "chase-freedom-flex",
             "chase-freedom-unlimited", "chase-freedom-rise", "chase-slate", 
-            "chase-ink-business-unlimited", "chase-ink-business-cash", "chase-ink-business-preferred",
-            "chase-united-explorer", "chase-southwest-rapid-rewards-plus", "chase-southwest-rapid-rewards-priority",
-            "chase-marriott-bonvoy-boundless", "chase-hyatt", "chase-ihg-rewards",
+            "chase-ink-business-unlimited",
             
-            # American Express (20+ cards)
-            "american-express-platinum-card", "american-express-gold-card", "american-express-green-card",
-            "american-express-blue-cash-preferred", "american-express-blue-cash-everyday", "american-express-blue-business-plus",
-            "american-express-business-platinum", "american-express-business-gold", "american-express-business-blue",
-            "american-express-delta-skymiles-platinum", "american-express-delta-skymiles-gold", "american-express-delta-skymiles-reserve",
-            "american-express-hilton-honors-aspire", "american-express-hilton-honors-surpass", "american-express-marriott-bonvoy-brilliant",
-            "american-express-cash-magnet", "american-express-everyday-preferred", "american-express-everyday",
+            # American Express (verified cards)
+            "american-express-blue-cash-preferred", "american-express-blue-cash-everyday",
+            "american-express-business-platinum", "american-express-business-gold",
+            "american-express-cash-magnet",
             
-            # Citi (15+ cards)
-            "citi-premier-card", "citi-double-cash", "citi-custom-cash", "citi-rewards-plus",
-            "citi-diamond-preferred", "citi-aadvantage-platinum-select", "citi-aadvantage-executive",
+            # Citi (verified cards)
+            "citi-double-cash", "citi-custom-cash", "citi-rewards-plus",
+            "citi-diamond-preferred", "citi-aadvantage-executive",
             "citi-aadvantage-mileup", "citi-costco-anywhere", "citi-simplicity",
-            "citi-accelerate", "citi-secured", "citi-dividend",
+            "citi-secured",
             
-            # Capital One (15+ cards)
-            "capital-one-venture-x", "capital-one-venture", "capital-one-savorone", "capital-one-quicksilver",
-            "capital-one-spark-cash-plus", "capital-one-spark-miles", "capital-one-ventureone",
-            "capital-one-platinum", "capital-one-quicksilver-one", "capital-one-secured",
+            # Capital One (verified cards)
+            "capital-one-venture-x", "capital-one-venture", "capital-one-quicksilver",
+            "capital-one-spark-miles", "capital-one-ventureone",
+            "capital-one-platinum", "capital-one-platinum-secured",
             "capital-one-walmart-rewards", "capital-one-savor",
             
-            # Bank of America (10+ cards)
-            "bank-of-america-premium-rewards", "bank-of-america-customized-cash", "bank-of-america-travel-rewards",
-            "bank-of-america-alaska-airlines", "bank-of-america-cash-rewards", "bank-of-america-unlimited-cash",
-            "bank-of-america-business-advantage",
+            # Bank of America (verified cards)
+            "bank-of-america-premium-rewards", "bank-of-america-travel-rewards",
             
-            # Discover (5+ cards)
-            "discover-it-cash-back", "discover-it-miles", "discover-it-chrome", "discover-it-student",
+            # Discover (verified cards)
+            "discover-it-cash-back", "discover-it-miles", "discover-it-chrome",
             "discover-it-secured",
             
-            # U.S. Bank (10+ cards)
-            "us-bank-altitude-go", "us-bank-altitude-reserve", "us-bank-cash-plus",
-            "us-bank-altitude-connect", "us-bank-flexperks", "us-bank-business-cash",
+            # U.S. Bank (verified cards)
+            "us-bank-altitude-go", "us-bank-cash-plus",
+            "us-bank-altitude-connect",
             
-            # Wells Fargo (10+ cards)
+            # Wells Fargo (verified cards)
             "wells-fargo-active-cash", "wells-fargo-autograph", "wells-fargo-platinum",
-            "wells-fargo-cash-wise", "wells-fargo-propel", "wells-fargo-biz-platinum",
+            "wells-fargo-cash-wise", "wells-fargo-propel",
             
-            # Other issuers (20+ cards)
-            "apple-card", "barclays-arrival-plus", "penfed-power-cash", "alliant-cashback",
+            # Other issuers (verified cards)
+            "apple-card", "barclays-arrival-plus", "alliant-cashback",
             "fidelity-rewards", "paypal-cashback", "amazon-prime-rewards", "target-redcard",
-            "costco-anywhere-visa", "pnc-cash-rewards", "huntington-voice", "regions-cash-back",
-            "td-double-up", "first-national-bank-everyday", "credit-one-bank",
+            "costco-anywhere-visa", "td-double-up",
         ]
         
         # Generate URLs from known slugs

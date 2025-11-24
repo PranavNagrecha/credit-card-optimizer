@@ -135,11 +135,15 @@ def scrape_all_cards_and_rules():
         except Exception as e:
             logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
     
-    # Save to disk
+    # Save to disk (save even if we didn't get all cards - partial data is better than no data)
     try:
-        data_manager.save_cards_and_rules(all_cards, all_rules)
-        logger.info(f"✅ Successfully scraped and saved {len(all_cards)} cards and {len(all_rules)} rules")
-        return True
+        if all_cards or all_rules:
+            data_manager.save_cards_and_rules(all_cards, all_rules)
+            logger.info(f"✅ Successfully scraped and saved {len(all_cards)} cards and {len(all_rules)} rules")
+            return True
+        else:
+            logger.warning("⚠️  No cards or rules scraped - nothing to save")
+            return False
     except Exception as e:
         logger.error(f"❌ Failed to save data: {e}", exc_info=True)
         return False
