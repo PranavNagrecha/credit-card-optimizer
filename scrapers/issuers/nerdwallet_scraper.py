@@ -612,8 +612,17 @@ class NerdWalletScraper(BaseScraper):
                     card_name = url_match.group(1).replace('-', ' ').title()
             
             if not card_name:
-                logger.warning(f"Could not extract card name from {url}")
-                return None
+                logger.warning(f"Could not extract card name from {url}, trying fallback methods...")
+                # Try harder: extract from URL slug
+                url_match = re.search(r'/reviews/credit-cards/([^/?#]+)', url)
+                if url_match:
+                    slug = url_match.group(1)
+                    # Convert slug to readable name
+                    card_name = slug.replace('-', ' ').title()
+                    logger.info(f"Extracted card name from URL slug: {card_name}")
+                else:
+                    logger.warning(f"Could not extract card name from {url} - skipping")
+                    return None
             
             # Extract annual fee
             annual_fee = 0.0
@@ -1020,7 +1029,9 @@ class NerdWalletScraper(BaseScraper):
             logger.warning("No card URLs available - this should not happen")
             return []
         
+        logger.info(f"Found {len(card_urls)} card URLs to scrape")
         cards = []
+        failed_urls = []
         
         for i, url in enumerate(card_urls):
             try:
@@ -1028,6 +1039,10 @@ class NerdWalletScraper(BaseScraper):
                 card = self._parse_card_page(url)
                 if card:
                     cards.append(card)
+                    logger.debug(f"  ✅ Successfully parsed: {card.name}")
+                else:
+                    failed_urls.append(url)
+                    logger.warning(f"  ❌ Failed to parse card from {url}")
                 
                 # Rate limiting (use config value or default)
                 try:
@@ -1037,12 +1052,17 @@ class NerdWalletScraper(BaseScraper):
                     time.sleep(1.0)  # Default 1 second delay
                 
             except Exception as e:
-                logger.error(f"Error scraping {url}: {e}", exc_info=True)
+                failed_urls.append(url)
+                logger.error(f"  ❌ Error scraping {url}: {e}", exc_info=True)
                 continue
         
         logger.info(f"✅ Successfully scraped {len(cards)} cards from NerdWallet (out of {len(card_urls)} attempted)")
         if len(cards) < len(card_urls):
-            logger.warning(f"⚠️  Only scraped {len(cards)}/{len(card_urls)} cards. Some may have failed or don't exist.")
+            logger.warning(f"⚠️  Only scraped {len(cards)}/{len(card_urls)} cards ({len(failed_urls)} failed)")
+            if len(failed_urls) <= 10:
+                logger.warning(f"Failed URLs: {failed_urls}")
+            else:
+                logger.warning(f"First 10 failed URLs: {failed_urls[:10]}")
         return cards
     
     def scrape_earning_rules(self, card: CardProduct) -> List[EarningRule]:
