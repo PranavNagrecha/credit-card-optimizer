@@ -2,17 +2,18 @@
 
 ## How It Works
 
-✅ **Data is refreshed ONCE per day at midnight**  
+✅ **Data is refreshed ONCE per day at midnight UTC** (automatic!)  
 ✅ **Stored in `.data/` directory** (cards.json, rules.json)  
 ✅ **API loads from cache instantly** - users never wait  
 ✅ **No scraping on user requests** - fast responses  
+✅ **Works on FREE tier** - no scheduled jobs needed!  
 
 ## Architecture
 
 ```
 ┌─────────────────────┐
-│  Scheduled Job      │  ← Runs daily at 12:00 AM
-│  (scraper_job.py)   │     Scrapes all 10 issuers
+│  Built-in Scheduler │  ← Runs daily at 12:00 AM UTC
+│  (in app.py)        │     Scrapes all 10 issuers
 └──────────┬──────────┘     Saves to .data/
            │
            ▼
@@ -29,37 +30,29 @@
 └─────────────────────┘     NO scraping on requests!
 ```
 
-## Setup on Render.com
+## Setup (Automatic - No Manual Steps!)
 
-### Step 1: Create Scheduled Job
+### ✅ It's Already Set Up!
 
-1. Go to Render Dashboard: https://dashboard.render.com
-2. Click **"New +"** → **"Cron Job"**
-3. Configure:
-   - **Name**: `credit-card-scraper-daily`
-   - **Schedule**: `0 0 * * *` (runs daily at midnight UTC)
-   - **Command**: `cd credit_card_optimizer && python scraper_job.py`
-   - **Plan**: **Free**
-4. Click **"Create Cron Job"**
+The API now includes a **built-in scheduler** that:
+1. **Automatically scrapes on first startup** if no data exists
+2. **Runs daily refresh at midnight UTC** automatically
+3. **Works on free tier** - no scheduled jobs or shell access needed!
 
-### Step 2: Initial Data Load
+### What Happens:
 
-Before the scheduled job runs, populate initial data:
+1. **First Startup**: If no data exists, API automatically runs scraper (takes 2-5 minutes)
+2. **Daily**: Scheduler runs scraper at midnight UTC automatically
+3. **Users**: Always get instant responses from cached data
 
-**Option A: Run manually via Render Shell**
-1. Go to your web service in Render
-2. Click **"Shell"** tab
-3. Run:
-   ```bash
-   cd credit_card_optimizer
-   python scraper_job.py
-   ```
-4. Wait 2-5 minutes for it to complete
+### Manual Refresh (Optional)
 
-**Option B: Run locally and commit data**
-1. Run locally: `python scraper_job.py`
-2. This creates `.data/` directory with JSON files
-3. Commit and push (optional - data will be regenerated on Render)
+If you need to refresh data manually, you can call:
+```bash
+curl -X POST https://your-app.onrender.com/api/refresh
+```
+
+But this is usually not needed - the scheduler handles it automatically!
 
 ### Step 3: Verify
 
