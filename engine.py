@@ -65,9 +65,8 @@ def find_best_cards_for_query(
         
         card = card_dict[rule.card_id]
         
-        # Skip business cards for now (unless explicitly requested)
-        if card.is_business_card:
-            continue
+        # Note: Business card filtering is now handled in the API layer
+        # This allows users to opt-in to business cards via the filter
         
         # Check category match
         category_match = match_categories(rule.merchant_categories, resolved_categories)

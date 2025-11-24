@@ -359,7 +359,8 @@ async def get_recommendation(
     max_results: int = Query(MAX_RECOMMENDATIONS, ge=1, le=50, description="Maximum number of recommendations"),
     issuer: Optional[str] = Query(None, description="Filter by issuer name (e.g., 'Chase', 'American Express')"),
     reward_type: Optional[str] = Query(None, description="Filter by reward type: 'cashback', 'points', 'miles'"),
-    network: Optional[str] = Query(None, description="Filter by network: 'VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'")
+    network: Optional[str] = Query(None, description="Filter by network: 'VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'"),
+    include_business: bool = Query(False, description="Include business cards (default: False, only personal cards)")
 ):
     try:
         all_cards, all_rules = load_all_cards_and_rules()
@@ -373,6 +374,11 @@ async def get_recommendation(
         
         # Apply filters
         filtered_cards = recommendation.candidate_cards
+        
+        # Filter by business/personal (default: personal only)
+        if not include_business:
+            filtered_cards = [cs for cs in filtered_cards if not cs.card.is_business_card]
+        
         if issuer:
             filtered_cards = [cs for cs in filtered_cards if issuer.lower() in cs.card.issuer.name.lower()]
         if reward_type:

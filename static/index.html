@@ -547,6 +547,7 @@
         function applyFilters() {
             if (!window.lastSearchResults) return;
             
+            const includeBusiness = document.getElementById('filterBusiness')?.checked || false;
             const issuerFilter = document.getElementById('filterIssuer')?.value || '';
             const rewardTypeFilter = document.getElementById('filterRewardType')?.value || '';
             const limitFilter = parseInt(document.getElementById('filterLimit')?.value || '20');
@@ -558,11 +559,15 @@
             cards.forEach(card => {
                 const cardIssuer = card.getAttribute('data-issuer');
                 const cardRewardType = card.getAttribute('data-reward-type');
+                const isBusiness = card.getAttribute('data-business') === 'true';
+                
+                // Business card filter (default: personal only)
+                const businessMatch = includeBusiness || !isBusiness;
                 
                 const issuerMatch = !issuerFilter || cardIssuer === issuerFilter;
                 const rewardTypeMatch = !rewardTypeFilter || cardRewardType === rewardTypeFilter;
                 
-                if (issuerMatch && rewardTypeMatch && visibleCount < limitFilter) {
+                if (businessMatch && issuerMatch && rewardTypeMatch && visibleCount < limitFilter) {
                     card.style.display = 'block';
                     // Update ranking number
                     const nameDiv = card.querySelector('.card-name');

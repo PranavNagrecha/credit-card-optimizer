@@ -826,12 +826,27 @@ class NerdWalletScraper(BaseScraper):
             return None
     
     def _parse_earning_rules(self, url: str, card: CardProduct) -> List[EarningRule]:
-        """Parse earning rules from a NerdWallet card page."""
+        """Parse earning rules from a NerdWallet card page using rule-based parser."""
         try:
             html = self.fetch_url(url)
             if not html:
                 return []
             
+            # Try structured rule parser first (more accurate)
+            try:
+                from scrapers.issuers.nerdwallet_rule_parser import NerdWalletRuleParser
+                parser = NerdWalletRuleParser(card.type)
+                structured_rules = parser.parse_from_html(html, card.id)
+                
+                if structured_rules:
+                    logger.info(f"Parsed {len(structured_rules)} structured rules for {card.name}")
+                    return structured_rules
+            except ImportError:
+                logger.warning("Structured rule parser not available, using fallback")
+            except Exception as e:
+                logger.warning(f"Structured parser failed: {e}, using fallback")
+            
+            # Fallback to original parsing method
             soup = BeautifulSoup(html, 'html.parser')
             rules = []
             
