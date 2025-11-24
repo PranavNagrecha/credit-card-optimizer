@@ -361,7 +361,8 @@ async def get_recommendation(
     issuer: Optional[str] = Query(None, description="Filter by issuer name (e.g., 'Chase', 'American Express')"),
     reward_type: Optional[str] = Query(None, description="Filter by reward type: 'cashback', 'points', 'miles'"),
     network: Optional[str] = Query(None, description="Filter by network: 'VISA', 'MASTERCARD', 'AMEX', 'DISCOVER'"),
-    include_business: bool = Query(False, description="Include business cards (default: False, only personal cards)")
+    card_type: Optional[str] = Query(None, description="Filter by card type: 'personal', 'business', or 'all'"),
+    merchant: Optional[str] = Query(None, description="Filter by merchant name (e.g., 'Amazon', 'Walmart')")
 ):
     try:
         all_cards, all_rules = load_all_cards_and_rules()
@@ -376,12 +377,22 @@ async def get_recommendation(
         # Apply filters
         filtered_cards = recommendation.candidate_cards
         
-        # Filter by business/personal (default: personal only)
-        if not include_business:
+        # Filter by business/personal (default: personal only if not specified)
+        if card_type:
+            if card_type.lower() == 'personal':
+                filtered_cards = [cs for cs in filtered_cards if not cs.card.is_business_card]
+            elif card_type.lower() == 'business':
+                filtered_cards = [cs for cs in filtered_cards if cs.card.is_business_card]
+            # 'all' means no filtering
+        else:
+            # Default: personal only
             filtered_cards = [cs for cs in filtered_cards if not cs.card.is_business_card]
         
+        # Filter by issuer
         if issuer:
             filtered_cards = [cs for cs in filtered_cards if issuer.lower() in cs.card.issuer.name.lower()]
+        
+        # Filter by reward type
         if reward_type:
             reward_type_map = {
                 'cashback': RewardType.CASHBACK_PERCENT,
@@ -391,6 +402,8 @@ async def get_recommendation(
             target_type = reward_type_map.get(reward_type.lower())
             if target_type:
                 filtered_cards = [cs for cs in filtered_cards if cs.card.type == target_type]
+        
+        # Filter by network
         if network:
             from models import CardNetwork
             network_map = {
@@ -403,6 +416,18 @@ async def get_recommendation(
             target_network = network_map.get(network.lower())
             if target_network:
                 filtered_cards = [cs for cs in filtered_cards if cs.card.network == target_network]
+        
+        # Filter by merchant (check if merchant name appears in matching rule)
+        if merchant:
+            merchant_lower = merchant.lower()
+            filtered_cards = [
+                cs for cs in filtered_cards
+                if cs.matching_rule and (
+                    any(merchant_lower in m.lower() or m.lower() in merchant_lower 
+                        for m in cs.matching_rule.merchant_names) or
+                    merchant_lower in cs.matching_rule.description.lower()
+                )
+            ]
         
         # Limit to max_results after filtering
         filtered_cards = filtered_cards[:max_results]

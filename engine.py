@@ -154,14 +154,26 @@ def find_best_cards_for_query(
             )
         )
     
-    # Sort by effective rate (descending)
-    candidate_scores.sort(
+    # Deduplicate by card ID - keep only the best rate per card
+    card_best_score: dict[str, CardScore] = {}
+    for score in candidate_scores:
+        card_id = score.card.id
+        if card_id not in card_best_score:
+            card_best_score[card_id] = score
+        else:
+            # Keep the score with the higher effective rate
+            if score.effective_rate_cents_per_dollar > card_best_score[card_id].effective_rate_cents_per_dollar:
+                card_best_score[card_id] = score
+    
+    # Convert back to list and sort by effective rate (descending)
+    deduplicated_scores = list(card_best_score.values())
+    deduplicated_scores.sort(
         key=lambda x: x.effective_rate_cents_per_dollar,
         reverse=True
     )
     
     # Take top N
-    top_cards = candidate_scores[:max_results]
+    top_cards = deduplicated_scores[:max_results]
     
     # Generate overall explanation
     if not top_cards:

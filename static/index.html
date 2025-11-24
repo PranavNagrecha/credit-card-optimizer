@@ -308,6 +308,43 @@
             margin-bottom: 10px;
         }
         
+        .filters-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -374,6 +411,46 @@
                 <button class="example-chip" onclick="setQuery('gas')">Gas Stations</button>
                 <button class="example-chip" onclick="setQuery('Target')">Target</button>
                 <button class="example-chip" onclick="setQuery('travel')">Travel</button>
+            </div>
+            
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="filterCardType">Card Type:</label>
+                    <select id="filterCardType">
+                        <option value="personal">Personal (Default)</option>
+                        <option value="business">Business</option>
+                        <option value="all">All Cards</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterIssuer">Issuer:</label>
+                    <select id="filterIssuer">
+                        <option value="">All Issuers</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterRewardType">Reward Type:</label>
+                    <select id="filterRewardType">
+                        <option value="">All Types</option>
+                        <option value="cashback">Cashback</option>
+                        <option value="points">Points</option>
+                        <option value="miles">Miles</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterNetwork">Network:</label>
+                    <select id="filterNetwork">
+                        <option value="">All Networks</option>
+                        <option value="visa">VISA</option>
+                        <option value="mastercard">Mastercard</option>
+                        <option value="amex">American Express</option>
+                        <option value="discover">Discover</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filterMerchant">Merchant (optional):</label>
+                    <input type="text" id="filterMerchant" placeholder="e.g., Amazon, Walmart">
+                </div>
             </div>
         </div>
         
@@ -454,7 +531,29 @@
             `;
             
             try {
-                const response = await fetch(`${API_URL}/recommend?query=${encodeURIComponent(query)}&max_results=50`);
+                // Build query parameters with filters
+                const params = new URLSearchParams({
+                    query: query,
+                    max_results: '50'
+                });
+                
+                // Add filters if they exist
+                const cardTypeFilter = document.getElementById('filterCardType')?.value || 'personal';
+                if (cardTypeFilter) params.append('card_type', cardTypeFilter);
+                
+                const issuerFilter = document.getElementById('filterIssuer')?.value;
+                if (issuerFilter) params.append('issuer', issuerFilter);
+                
+                const rewardTypeFilter = document.getElementById('filterRewardType')?.value;
+                if (rewardTypeFilter) params.append('reward_type', rewardTypeFilter);
+                
+                const networkFilter = document.getElementById('filterNetwork')?.value;
+                if (networkFilter) params.append('network', networkFilter);
+                
+                const merchantFilter = document.getElementById('filterMerchant')?.value?.trim();
+                if (merchantFilter) params.append('merchant', merchantFilter);
+                
+                const response = await fetch(`${API_URL}/recommend?${params.toString()}`);
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
@@ -465,6 +564,7 @@
                 // Store full results for client-side filtering
                 window.lastSearchResults = data;
                 displayResults(data);
+                populateIssuerFilter(data);
             } catch (error) {
                 resultsDiv.innerHTML = `
                     <div class="error">
@@ -476,6 +576,22 @@
                 searchBtn.disabled = false;
                 searchBtn.textContent = 'Search';
             }
+        }
+        
+        function populateIssuerFilter(data) {
+            if (!data.candidate_cards) return;
+            const issuerSelect = document.getElementById('filterIssuer');
+            const issuers = new Set();
+            data.candidate_cards.forEach(cs => {
+                if (cs.card && cs.card.issuer && cs.card.issuer.name) {
+                    issuers.add(cs.card.issuer.name);
+                }
+            });
+            const sortedIssuers = Array.from(issuers).sort();
+            issuerSelect.innerHTML = '<option value="">All Issuers</option>';
+            sortedIssuers.forEach(issuer => {
+                issuerSelect.innerHTML += `<option value="${issuer}">${issuer}</option>`;
+            });
         }
         
         function displayResults(data) {
