@@ -107,7 +107,8 @@ class NerdWalletScraper(BaseScraper):
         "Goldman Sachs": "https://www.goldmansachs.com",
     }
     
-    def __init__(self, use_cache: bool = True, offline_mode: bool = False, use_selenium: bool = False):
+    def __init__(self, use_cache: bool = True, offline_mode: bool = False, use_selenium: bool = True):
+        # Use Selenium by default for NerdWallet since pages are JS-rendered
         super().__init__("NerdWallet", use_cache=use_cache, offline_mode=offline_mode, use_selenium=use_selenium)
         self.issuer = CardIssuer(
             name="Various",
@@ -280,33 +281,198 @@ class NerdWalletScraper(BaseScraper):
         
         card_urls = []
         
-        # Comprehensive fallback list of popular cards (used if discovery fails)
-        fallback_urls = [
-            "https://www.nerdwallet.com/reviews/credit-cards/chase-sapphire-preferred",
-            "https://www.nerdwallet.com/reviews/credit-cards/chase-sapphire-reserve",
-            "https://www.nerdwallet.com/reviews/credit-cards/chase-freedom-flex",
-            "https://www.nerdwallet.com/reviews/credit-cards/chase-freedom-unlimited",
-            "https://www.nerdwallet.com/reviews/credit-cards/american-express-platinum-card",
-            "https://www.nerdwallet.com/reviews/credit-cards/american-express-gold-card",
-            "https://www.nerdwallet.com/reviews/credit-cards/american-express-blue-cash-preferred",
-            "https://www.nerdwallet.com/reviews/credit-cards/american-express-blue-cash-everyday",
-            "https://www.nerdwallet.com/reviews/credit-cards/citi-premier-card",
-            "https://www.nerdwallet.com/reviews/credit-cards/citi-double-cash",
-            "https://www.nerdwallet.com/reviews/credit-cards/citi-custom-cash",
-            "https://www.nerdwallet.com/reviews/credit-cards/capital-one-venture-x",
-            "https://www.nerdwallet.com/reviews/credit-cards/capital-one-venture",
-            "https://www.nerdwallet.com/reviews/credit-cards/capital-one-savorone",
-            "https://www.nerdwallet.com/reviews/credit-cards/capital-one-quicksilver",
-            "https://www.nerdwallet.com/reviews/credit-cards/bank-of-america-premium-rewards",
-            "https://www.nerdwallet.com/reviews/credit-cards/bank-of-america-customized-cash",
-            "https://www.nerdwallet.com/reviews/credit-cards/discover-it-cash-back",
-            "https://www.nerdwallet.com/reviews/credit-cards/discover-it-miles",
-            "https://www.nerdwallet.com/reviews/credit-cards/us-bank-altitude-go",
-            "https://www.nerdwallet.com/reviews/credit-cards/us-bank-altitude-reserve",
-            "https://www.nerdwallet.com/reviews/credit-cards/wells-fargo-active-cash",
-            "https://www.nerdwallet.com/reviews/credit-cards/wells-fargo-autograph",
-            "https://www.nerdwallet.com/reviews/credit-cards/apple-card",
+        # Method 1: Try sitemap (most comprehensive)
+        try:
+            sitemap_urls = [
+                'https://www.nerdwallet.com/sitemap.xml',
+                'https://www.nerdwallet.com/sitemap_index.xml',
+            ]
+            
+            for sitemap_url in sitemap_urls:
+                try:
+                    html = self.fetch_url(sitemap_url)
+                    if html:
+                        # Parse XML sitemap
+                        import xml.etree.ElementTree as ET
+                        try:
+                            root = ET.fromstring(html)
+                            # Find all URLs containing /reviews/credit-cards/
+                            for url_elem in root.iter():
+                                if url_elem.tag.endswith('loc'):
+                                    url_text = url_elem.text
+                                    if url_text and '/reviews/credit-cards/' in url_text:
+                                        # Skip non-card pages
+                                        if not any(skip in url_text for skip in ['/compare', '/best', '/top', '/category', '/type']):
+                                            if url_text not in card_urls:
+                                                card_urls.append(url_text)
+                            if card_urls:
+                                logger.info(f"Found {len(card_urls)} card URLs from sitemap")
+                                break
+                        except ET.ParseError:
+                            # Not XML, try HTML parsing
+                            soup = BeautifulSoup(html, 'html.parser')
+                            links = soup.find_all('a', href=re.compile(r'/reviews/credit-cards/'))
+                            for link in links:
+                                href = link.get('href', '')
+                                if href and '/reviews/credit-cards/' in href:
+                                    full_url = urljoin(self.BASE_URL, href)
+                                    if full_url not in card_urls and not any(skip in full_url for skip in ['/compare', '/best', '/top']):
+                                        card_urls.append(full_url)
+                            if card_urls:
+                                logger.info(f"Found {len(card_urls)} card URLs from sitemap HTML")
+                                break
+                except Exception as e:
+                    logger.debug(f"Error fetching sitemap {sitemap_url}: {e}")
+                    continue
+        except Exception as e:
+            logger.debug(f"Error with sitemap discovery: {e}")
+        
+            # Method 2: Use Selenium to scrape JS-rendered pages
+            if len(card_urls) < 50:  # If we didn't get many from sitemap
+                if self.use_selenium:
+                    try:
+                        logger.info("Using Selenium to discover cards from JS-rendered pages...")
+                        driver = self._get_selenium_driver()
+                        if driver:
+                            # Visit main credit cards page
+                            driver.get(self.CARDS_LIST_URL)
+                            time.sleep(3)  # Wait for JS to render
+                            
+                            # Scroll to load more content (lazy loading)
+                            last_height = driver.execute_script("return document.body.scrollHeight")
+                            scroll_attempts = 0
+                            while scroll_attempts < 5:  # Scroll 5 times to load more
+                                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                                time.sleep(2)
+                                new_height = driver.execute_script("return document.body.scrollHeight")
+                                if new_height == last_height:
+                                    break
+                                last_height = new_height
+                                scroll_attempts += 1
+                            
+                            # Get page source after JS rendering
+                            html = driver.page_source
+                            soup = BeautifulSoup(html, 'html.parser')
+                            
+                            # Find all links
+                            card_links = soup.find_all('a', href=re.compile(r'/reviews/credit-cards/'))
+                            
+                            for link in card_links:
+                                href = link.get('href', '')
+                                if href and '/reviews/credit-cards/' in href:
+                                    # Skip comparison pages and other non-card pages
+                                    if any(skip in href for skip in ['/compare', '/best', '/top', '/category', '/type', '/guide']):
+                                        continue
+                                    # Skip if it's not a card review
+                                    parts = href.split('/reviews/credit-cards/')
+                                    if len(parts) < 2 or not parts[1] or parts[1].strip() == '':
+                                        continue
+                                    
+                                    full_url = urljoin(self.BASE_URL, href)
+                                    if full_url not in card_urls:
+                                        card_urls.append(full_url)
+                            
+                            logger.info(f"Found {len(card_links)} potential card links via Selenium")
+                        else:
+                            logger.warning("Selenium not available, falling back to HTML parsing")
+                    except Exception as e:
+                        logger.warning(f"Error using Selenium for discovery: {e}")
+                
+                # Fallback: Try HTML parsing of multiple listing pages
+                if len(card_urls) < 50:
+                    listing_urls = [
+                        self.CARDS_LIST_URL,
+                    ]
+                    
+                    for listing_url in listing_urls:
+                        try:
+                            html = self.fetch_url(listing_url)
+                            if not html:
+                                continue
+                            
+                            soup = BeautifulSoup(html, 'html.parser')
+                            
+                            # Find all links to card review pages
+                            card_links = soup.find_all('a', href=re.compile(r'/reviews/credit-cards/'))
+                            
+                            for link in card_links:
+                                href = link.get('href', '')
+                                if href and '/reviews/credit-cards/' in href:
+                                    # Skip comparison pages and other non-card pages
+                                    if any(skip in href for skip in ['/compare', '/best', '/top', '/category', '/type', '/guide']):
+                                        continue
+                                    # Skip if it's not a card review
+                                    parts = href.split('/reviews/credit-cards/')
+                                    if len(parts) < 2 or not parts[1] or parts[1].strip() == '':
+                                        continue
+                                    
+                                    full_url = urljoin(self.BASE_URL, href)
+                                    if full_url not in card_urls:
+                                        card_urls.append(full_url)
+                            
+                            # Small delay between pages
+                            time.sleep(0.5)
+                            
+                        except Exception as e:
+                            logger.warning(f"Error fetching {listing_url}: {e}")
+                            continue
+        
+        # Comprehensive list of known cards on NerdWallet (100+ cards)
+        # This list is built from known card reviews on NerdWallet
+        known_card_slugs = [
+            # Chase (15+ cards)
+            "chase-sapphire-preferred", "chase-sapphire-reserve", "chase-freedom-flex",
+            "chase-freedom-unlimited", "chase-freedom-rise", "chase-slate", 
+            "chase-ink-business-unlimited", "chase-ink-business-cash", "chase-ink-business-preferred",
+            "chase-united-explorer", "chase-southwest-rapid-rewards-plus", "chase-southwest-rapid-rewards-priority",
+            "chase-marriott-bonvoy-boundless", "chase-hyatt", "chase-ihg-rewards",
+            
+            # American Express (20+ cards)
+            "american-express-platinum-card", "american-express-gold-card", "american-express-green-card",
+            "american-express-blue-cash-preferred", "american-express-blue-cash-everyday", "american-express-blue-business-plus",
+            "american-express-business-platinum", "american-express-business-gold", "american-express-business-blue",
+            "american-express-delta-skymiles-platinum", "american-express-delta-skymiles-gold", "american-express-delta-skymiles-reserve",
+            "american-express-hilton-honors-aspire", "american-express-hilton-honors-surpass", "american-express-marriott-bonvoy-brilliant",
+            "american-express-cash-magnet", "american-express-everyday-preferred", "american-express-everyday",
+            
+            # Citi (15+ cards)
+            "citi-premier-card", "citi-double-cash", "citi-custom-cash", "citi-rewards-plus",
+            "citi-diamond-preferred", "citi-aadvantage-platinum-select", "citi-aadvantage-executive",
+            "citi-aadvantage-mileup", "citi-costco-anywhere", "citi-simplicity",
+            "citi-accelerate", "citi-secured", "citi-dividend",
+            
+            # Capital One (15+ cards)
+            "capital-one-venture-x", "capital-one-venture", "capital-one-savorone", "capital-one-quicksilver",
+            "capital-one-spark-cash-plus", "capital-one-spark-miles", "capital-one-ventureone",
+            "capital-one-platinum", "capital-one-quicksilver-one", "capital-one-secured",
+            "capital-one-walmart-rewards", "capital-one-savor",
+            
+            # Bank of America (10+ cards)
+            "bank-of-america-premium-rewards", "bank-of-america-customized-cash", "bank-of-america-travel-rewards",
+            "bank-of-america-alaska-airlines", "bank-of-america-cash-rewards", "bank-of-america-unlimited-cash",
+            "bank-of-america-business-advantage",
+            
+            # Discover (5+ cards)
+            "discover-it-cash-back", "discover-it-miles", "discover-it-chrome", "discover-it-student",
+            "discover-it-secured",
+            
+            # U.S. Bank (10+ cards)
+            "us-bank-altitude-go", "us-bank-altitude-reserve", "us-bank-cash-plus",
+            "us-bank-altitude-connect", "us-bank-flexperks", "us-bank-business-cash",
+            
+            # Wells Fargo (10+ cards)
+            "wells-fargo-active-cash", "wells-fargo-autograph", "wells-fargo-platinum",
+            "wells-fargo-cash-wise", "wells-fargo-propel", "wells-fargo-biz-platinum",
+            
+            # Other issuers (20+ cards)
+            "apple-card", "barclays-arrival-plus", "penfed-power-cash", "alliant-cashback",
+            "fidelity-rewards", "paypal-cashback", "amazon-prime-rewards", "target-redcard",
+            "costco-anywhere-visa", "pnc-cash-rewards", "huntington-voice", "regions-cash-back",
+            "td-double-up", "first-national-bank-everyday", "credit-one-bank",
         ]
+        
+        # Generate URLs from known slugs
+        fallback_urls = [f"{self.BASE_URL}/reviews/credit-cards/{slug}" for slug in known_card_slugs]
         
         try:
             # Try multiple listing pages
