@@ -468,7 +468,7 @@ def resolve_merchant_query(query: str) -> MerchantCategoryMapping:
     for key, mapping in KNOWN_MERCHANTS.items():
         for alias in mapping.aliases:
             if alias in query_lower or alias in query_clean:
-            return mapping
+                return mapping
     
     # Check if it's a generic category
     normalized = normalize_category_name(query_lower)
