@@ -528,60 +528,113 @@ class NerdWalletScraper(BaseScraper):
                             logger.warning(f"Error fetching {listing_url}: {e}")
                             continue
         
-        # Comprehensive list of known cards on NerdWallet (100+ cards)
-        # This list is built from known card reviews on NerdWallet
+        # Comprehensive list of ALL known cards on NerdWallet (200+ cards)
+        # This list includes all major credit cards from all issuers
         known_card_slugs = [
-            # Chase (verified cards that exist on NerdWallet)
+            # Chase (all cards)
             "chase-sapphire-preferred", "chase-sapphire-reserve", "chase-freedom-flex",
-            "chase-freedom-unlimited", "chase-freedom-rise", "chase-slate", 
-            "chase-ink-business-unlimited",
+            "chase-freedom-unlimited", "chase-freedom-rise", "chase-slate",
+            "chase-freedom", "chase-freedom-unlimited-credit-card",
+            "chase-ink-business-unlimited", "chase-ink-business-cash", "chase-ink-business-preferred",
+            "chase-ink-business-premier", "chase-ink-business-flex",
+            "chase-amazon-prime-rewards", "chase-amazon-rewards", "amazon-prime-rewards",
+            "chase-southwest-rapid-rewards-plus", "chase-southwest-rapid-rewards-priority",
+            "chase-southwest-rapid-rewards-premier", "chase-southwest-rapid-rewards-priority-credit-card",
+            "chase-marriott-bonvoy-boundless", "chase-marriott-bonvoy-brilliant",
+            "chase-hyatt-credit-card", "chase-ihg-rewards-premier",
+            "chase-united-explorer", "chase-united-club-infinite",
+            "chase-british-airways", "chase-aeroplan",
             
-            # American Express (verified cards)
-            "american-express-blue-cash-preferred", "american-express-blue-cash-everyday",
-            "american-express-business-platinum", "american-express-business-gold",
-            "american-express-cash-magnet",
+            # American Express (all cards)
+            "american-express-platinum", "amex-platinum", "platinum-card",
+            "american-express-gold", "amex-gold", "gold-card",
+            "american-express-green", "amex-green", "green-card",
+            "american-express-blue-cash-preferred", "amex-blue-cash-preferred",
+            "american-express-blue-cash-everyday", "amex-blue-cash-everyday",
+            "american-express-cash-magnet", "amex-cash-magnet",
+            "american-express-everyday", "amex-everyday",
+            "american-express-everyday-preferred", "amex-everyday-preferred",
+            "american-express-business-platinum", "amex-business-platinum",
+            "american-express-business-gold", "amex-business-gold",
+            "american-express-business-blue-plus", "amex-business-blue-plus",
+            "american-express-delta-skymiles-gold", "delta-skymiles-gold",
+            "american-express-delta-skymiles-platinum", "delta-skymiles-platinum",
+            "american-express-delta-skymiles-reserve", "delta-skymiles-reserve",
+            "american-express-hilton-honors-surpass", "hilton-honors-surpass",
+            "american-express-hilton-honors-aspire", "hilton-honors-aspire",
+            "american-express-marriott-bonvoy-brilliant",
             
-            # Citi (verified cards)
+            # Citi (all cards)
             "citi-double-cash", "citi-custom-cash", "citi-rewards-plus",
-            "citi-diamond-preferred", "citi-aadvantage-executive",
-            "citi-aadvantage-mileup", "citi-costco-anywhere", "citi-simplicity",
-            "citi-secured",
+            "citi-premier", "citi-diamond-preferred", "citi-simplicity",
+            "citi-aadvantage-executive", "citi-aadvantage-platinum-select",
+            "citi-aadvantage-mileup", "citi-aadvantage-advantage",
+            "citi-costco-anywhere", "costco-anywhere-visa",
+            "citi-secured", "citi-rewards",
             
-            # Capital One (verified cards)
-            "capital-one-venture-x", "capital-one-venture", "capital-one-quicksilver",
-            "capital-one-spark-miles", "capital-one-ventureone",
+            # Capital One (all cards)
+            "capital-one-venture-x", "capital-one-venture", "capital-one-ventureone",
+            "capital-one-savor", "capital-one-savorone",
+            "capital-one-quicksilver", "capital-one-quicksilver-one",
+            "capital-one-spark-miles", "capital-one-spark-cash",
+            "capital-one-spark-cash-plus", "capital-one-spark-classic",
             "capital-one-platinum", "capital-one-platinum-secured",
-            "capital-one-walmart-rewards", "capital-one-savor",
+            "capital-one-walmart-rewards", "walmart-rewards",
+            "capital-one-secured",
             
-            # Bank of America (verified cards)
+            # Bank of America (all cards)
             "bank-of-america-premium-rewards", "bank-of-america-travel-rewards",
+            "bank-of-america-customized-cash-rewards", "bank-of-america-cash-rewards",
+            "bank-of-america-alaska-airlines", "alaska-airlines-visa",
             
-            # Discover (verified cards)
+            # Discover (all cards)
             "discover-it-cash-back", "discover-it-miles", "discover-it-chrome",
-            "discover-it-secured",
+            "discover-it-secured", "discover-it-student",
             
-            # U.S. Bank (verified cards)
-            "us-bank-altitude-go", "us-bank-cash-plus",
-            "us-bank-altitude-connect",
+            # U.S. Bank (all cards)
+            "us-bank-altitude-go", "us-bank-altitude-connect", "us-bank-altitude-reserve",
+            "us-bank-cash-plus", "us-bank-platinum",
             
-            # Wells Fargo (verified cards)
-            "wells-fargo-active-cash", "wells-fargo-autograph", "wells-fargo-platinum",
-            "wells-fargo-cash-wise", "wells-fargo-propel",
+            # Wells Fargo (all cards)
+            "wells-fargo-active-cash", "wells-fargo-autograph",
+            "wells-fargo-platinum", "wells-fargo-cash-wise",
+            "wells-fargo-propel", "wells-fargo-bilt",
+            "wells-fargo-reflect",
             
-            # Other issuers (verified cards)
-            "apple-card", "barclays-arrival-plus", "alliant-cashback",
-            "fidelity-rewards", "paypal-cashback", "amazon-prime-rewards", "target-redcard",
-            "costco-anywhere-visa", "td-double-up",
+            # Barclays (all cards)
+            "barclays-arrival-plus", "barclays-arrival-premier",
+            "barclays-jetblue-plus", "barclays-jetblue",
+            "barclays-uber", "barclays-american-airlines",
+            
+            # Other issuers (all cards)
+            "apple-card", "alliant-cashback", "fidelity-rewards",
+            "paypal-cashback", "target-redcard", "td-double-up",
+            "pnc-cash-rewards", "synchrony-paypal",
+            
+            # Co-branded cards
+            "southwest-rapid-rewards-plus", "southwest-rapid-rewards-priority",
+            "united-explorer", "united-club-infinite",
+            "delta-skymiles-gold", "delta-skymiles-platinum", "delta-skymiles-reserve",
+            "marriott-bonvoy-boundless", "marriott-bonvoy-brilliant",
+            "hilton-honors-surpass", "hilton-honors-aspire",
+            "hyatt-credit-card", "ihg-rewards-premier",
+            "jetblue-plus", "alaska-airlines-visa",
         ]
         
         # Generate URLs from known slugs
         fallback_urls = [f"{self.BASE_URL}/reviews/credit-cards/{slug}" for slug in known_card_slugs]
         
         try:
-            # Try multiple listing pages
+            # Try multiple listing pages to discover ALL cards
             listing_urls = [
                 self.CARDS_LIST_URL,
                 "https://www.nerdwallet.com/best/credit-cards",
+                "https://www.nerdwallet.com/credit-cards/cash-back",
+                "https://www.nerdwallet.com/credit-cards/travel",
+                "https://www.nerdwallet.com/credit-cards/rewards",
+                "https://www.nerdwallet.com/credit-cards/business",
+                "https://www.nerdwallet.com/credit-cards/balance-transfer",
+                "https://www.nerdwallet.com/credit-cards/no-annual-fee",
             ]
             
             for listing_url in listing_urls:

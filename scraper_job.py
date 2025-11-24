@@ -86,54 +86,78 @@ def scrape_all_cards_and_rules():
     all_cards = []
     all_rules = []
     
-    # Primary scraper: NerdWallet (aggregates all cards)
-    # Fallback scrapers: Individual issuer scrapers (for cards not on NerdWallet)
+    # Use BOTH NerdWallet AND manual scrapers to get ALL cards
+    # NerdWallet for cards it can find, manual scrapers (comprehensive_data.py) for everything else
     scrapers = []
     
-    # Use NerdWallet as primary source (scrapes all cards from one place)
+    # Step 1: Try NerdWallet scraper (primary source - finds many cards)
     try:
         from credit_card_optimizer.scrapers.issuers.nerdwallet_scraper import NerdWalletScraper
         scrapers.append(NerdWalletScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE))
-        logger.info("✅ Using NerdWallet as primary data source (scrapes all cards)")
+        logger.info("✅ Using NerdWallet as primary data source")
     except ImportError:
         try:
             from scrapers.issuers.nerdwallet_scraper import NerdWalletScraper
             scrapers.append(NerdWalletScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE))
-            logger.info("✅ Using NerdWallet as primary data source (scrapes all cards)")
+            logger.info("✅ Using NerdWallet as primary data source")
         except ImportError as e:
-            logger.warning(f"NerdWallet scraper not available ({e}), using individual scrapers as fallback")
-            # Fallback to individual scrapers
-            scrapers = [
-                ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                AppleScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                AirlineCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-                PremiumCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-            ]
+            logger.warning(f"NerdWallet scraper not available ({e})")
+    
+    # Step 2: Add ALL manual scrapers (comprehensive_data.py) to fill in missing cards
+    # These use comprehensive_data.py which has ALL cards defined
+    manual_scrapers = [
+        ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        AppleScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        AirlineCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        PremiumCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+    ]
+    scrapers.extend(manual_scrapers)
+    logger.info(f"✅ Added {len(manual_scrapers)} manual scrapers to ensure ALL cards are included")
+    
+    # Track cards by ID to avoid duplicates
+    cards_by_id = {}
+    rules_by_card_id = {}
     
     for scraper in scrapers:
         try:
             logger.info(f"Scraping {scraper.issuer_name}...")
             cards = scraper.scrape_cards()
-            all_cards.extend(cards)
             logger.info(f"  Found {len(cards)} cards")
             
             for card in cards:
+                # Only add if we don't already have this card (deduplicate by ID)
+                if card.id not in cards_by_id:
+                    cards_by_id[card.id] = card
+                    rules_by_card_id[card.id] = []
+                else:
+                    logger.debug(f"  Skipping duplicate card: {card.name} (ID: {card.id})")
+                
+                # Get rules for this card
                 try:
                     rules = scraper.scrape_earning_rules(card)
-                    all_rules.extend(rules)
+                    rules_by_card_id[card.id].extend(rules)
                 except Exception as e:
                     logger.warning(f"  Failed to get rules for {card.name}: {e}")
         except Exception as e:
             logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
+    
+    # Convert back to lists
+    all_cards = list(cards_by_id.values())
+    all_rules = []
+    for card_id, rules in rules_by_card_id.items():
+        all_rules.extend(rules)
+    
+    logger.info(f"✅ Total unique cards after deduplication: {len(all_cards)}")
+    logger.info(f"✅ Total rules: {len(all_rules)}")
     
     # Save to disk (save even if we didn't get all cards - partial data is better than no data)
     try:

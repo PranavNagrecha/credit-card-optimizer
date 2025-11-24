@@ -134,6 +134,102 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
                 },
             ],
         },
+        "freedom-rise": {
+            "name": "Chase Freedom Rise",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.03,
+            "earning_rules": [
+                {
+                    "description": "All purchases",
+                    "categories": [],
+                    "multiplier": 1.5,
+                },
+            ],
+        },
+        "slate": {
+            "name": "Chase Slate",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.CASHBACK_PERCENT,
+            "foreign_transaction_fee": 0.03,
+            "earning_rules": [
+                {
+                    "description": "No rewards - balance transfer card",
+                    "categories": [],
+                    "multiplier": 0.0,
+                },
+            ],
+        },
+        "ink-business-preferred": {
+            "name": "Chase Ink Business Preferred",
+            "annual_fee": 95.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "is_business_card": True,
+            "earning_rules": [
+                {
+                    "description": "Travel, shipping purchases, internet, cable, phone services, and advertising",
+                    "categories": ["travel", "utilities"],
+                    "multiplier": 3.0,
+                    "caps": [{"amount": 150000.0, "period": "year"}],
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "ink-business-cash": {
+            "name": "Chase Ink Business Cash",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "is_business_card": True,
+            "earning_rules": [
+                {
+                    "description": "Office supply stores, internet, cable, and phone services",
+                    "categories": ["utilities", "shopping"],
+                    "multiplier": 5.0,
+                    "caps": [{"amount": 25000.0, "period": "year"}],
+                },
+                {
+                    "description": "Gas stations and restaurants",
+                    "categories": ["gas", "restaurants"],
+                    "multiplier": 2.0,
+                    "caps": [{"amount": 25000.0, "period": "year"}],
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "ink-business-premier": {
+            "name": "Chase Ink Business Premier",
+            "annual_fee": 195.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "is_business_card": True,
+            "earning_rules": [
+                {
+                    "description": "Travel, shipping purchases, internet, cable, phone services, and advertising",
+                    "categories": ["travel", "utilities"],
+                    "multiplier": 2.5,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 2.0,
+                },
+            ],
+        },
     },
     "amex": {
         "gold-card": {
@@ -225,7 +321,7 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             ],
         },
         "blue-cash-preferred": {
-            "name": "Blue Cash Preferred",
+            "name": "American Express Blue Cash Preferred",
             "annual_fee": 0.0,  # First year, then $95
             "network": CardNetwork.AMEX,
             "reward_type": RewardType.CASHBACK_PERCENT,
@@ -390,6 +486,30 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
                     "merchant_names": ["Capital One Entertainment"],
                     "multiplier": 8.0,
                     "stacking_rules": "Only applies to purchases through Capital One Entertainment portal",
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "savor": {
+            "name": "Capital One Savor",
+            "annual_fee": 95.0,
+            "network": CardNetwork.MASTERCARD,
+            "reward_type": RewardType.CASHBACK_PERCENT,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Dining, entertainment, and streaming services",
+                    "categories": ["restaurants", "entertainment", "streaming"],
+                    "multiplier": 4.0,
+                },
+                {
+                    "description": "Groceries (not including Walmart and Target)",
+                    "categories": ["groceries"],
+                    "multiplier": 3.0,
                 },
                 {
                     "description": "All other purchases",

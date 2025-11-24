@@ -168,11 +168,13 @@ class AirlineCardsScraper(BaseScraper):
         
         for rule_data in data.get("earning_rules", []):
             rule = EarningRule(
+                card_id=card.id,
                 description=rule_data["description"],
-                categories=rule_data.get("categories", []),
+                merchant_categories=rule_data.get("categories", []),
                 merchant_names=rule_data.get("merchant_names", []),
                 multiplier=rule_data["multiplier"],
-                caps=[Cap(**cap) for cap in rule_data.get("caps", [])],
+                reward_type=card.type,
+                caps=[Cap(amount_dollars=cap.get("amount", cap.get("amount_dollars", 0)), period=cap.get("period", "year")) for cap in rule_data.get("caps", [])],
                 is_rotating=rule_data.get("is_rotating", False),
                 stacking_rules=rule_data.get("stacking_rules"),
             )
