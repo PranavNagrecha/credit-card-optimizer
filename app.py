@@ -16,25 +16,39 @@ parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 
-# Import as package (this allows scrapers' relative imports to work)
-try:
-    from credit_card_optimizer.config import MAX_RECOMMENDATIONS, OFFLINE_MODE, USE_CACHE
-    from credit_card_optimizer.data_manager import DataManager
-    from credit_card_optimizer.engine import find_best_cards_for_query
-    from credit_card_optimizer.models import CardProduct, EarningRule
-    from credit_card_optimizer.scraper_job import scrape_all_cards_and_rules
-except ImportError:
-    # Fallback: direct imports if package structure doesn't work
-    import config
-    import data_manager
-    import engine
-    import models
-    import scraper_job
-    from config import MAX_RECOMMENDATIONS, OFFLINE_MODE, USE_CACHE
-    from data_manager import DataManager
-    from engine import find_best_cards_for_query
-    from models import CardProduct, EarningRule
-    from scraper_job import scrape_all_cards_and_rules
+# Import directly (we're in the credit_card_optimizer directory)
+# This avoids package import issues
+import config
+import data_manager
+import engine
+import models
+
+# Import what we need
+from config import MAX_RECOMMENDATIONS, OFFLINE_MODE, USE_CACHE
+from data_manager import DataManager
+from engine import find_best_cards_for_query
+from models import CardProduct, EarningRule
+
+# For scraper_job, we need to handle it differently since it uses relative imports
+# We'll define scrape_all_cards_and_rules inline to avoid import issues
+def scrape_all_cards_and_rules():
+    """Wrapper for scraper job that handles imports properly."""
+    # Add parent to path for package imports
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+    
+    try:
+        from credit_card_optimizer.scraper_job import scrape_all_cards_and_rules as _scrape
+        return _scrape()
+    except ImportError:
+        # If that fails, try importing scraper_job directly
+        try:
+            import scraper_job
+            return scraper_job.scrape_all_cards_and_rules()
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to import scraper_job: {e}")
+            return False
 
 # Now import api components
 import logging
