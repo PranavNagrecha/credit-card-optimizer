@@ -696,7 +696,8 @@ class NerdWalletScraper(BaseScraper):
             if not html:
                 return None
             
-            soup = BeautifulSoup(html, 'html.parser')
+            # Use preprocessed HTML for better parsing accuracy
+            soup = self.parse_html(html, preprocess=True)
             
             # Try to extract structured data from JSON-LD first
             json_ld_data = None

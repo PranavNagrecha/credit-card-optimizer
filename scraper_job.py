@@ -127,28 +127,43 @@ def scrape_all_cards_and_rules():
     cards_by_id = {}
     rules_by_card_id = {}
     
-    for scraper in scrapers:
-        try:
-            logger.info(f"Scraping {scraper.issuer_name}...")
-            cards = scraper.scrape_cards()
-            logger.info(f"  Found {len(cards)} cards")
-            
-            for card in cards:
-                # Only add if we don't already have this card (deduplicate by ID)
-                if card.id not in cards_by_id:
-                    cards_by_id[card.id] = card
-                    rules_by_card_id[card.id] = []
-                else:
-                    logger.debug(f"  Skipping duplicate card: {card.name} (ID: {card.id})")
+    # Batch processing: Process scrapers in batches for better progress tracking
+    # Inspired by: https://github.com/AnurupaK/Credit-Card-Scrape-Agent
+    BATCH_SIZE = 3  # Process 3 scrapers at a time
+    total_scrapers = len(scrapers)
+    
+    for batch_start in range(0, total_scrapers, BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, total_scrapers)
+        batch = scrapers[batch_start:batch_end]
+        batch_num = (batch_start // BATCH_SIZE) + 1
+        total_batches = (total_scrapers + BATCH_SIZE - 1) // BATCH_SIZE
+        
+        logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} scrapers)...")
+        
+        for scraper in batch:
+            try:
+                logger.info(f"Scraping {scraper.issuer_name}...")
+                cards = scraper.scrape_cards()
+                logger.info(f"  Found {len(cards)} cards")
                 
-                # Get rules for this card
-                try:
-                    rules = scraper.scrape_earning_rules(card)
-                    rules_by_card_id[card.id].extend(rules)
-                except Exception as e:
-                    logger.warning(f"  Failed to get rules for {card.name}: {e}")
-        except Exception as e:
-            logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
+                for card in cards:
+                    # Only add if we don't already have this card (deduplicate by ID)
+                    if card.id not in cards_by_id:
+                        cards_by_id[card.id] = card
+                        rules_by_card_id[card.id] = []
+                    else:
+                        logger.debug(f"  Skipping duplicate card: {card.name} (ID: {card.id})")
+                    
+                    # Get rules for this card
+                    try:
+                        rules = scraper.scrape_earning_rules(card)
+                        rules_by_card_id[card.id].extend(rules)
+                    except Exception as e:
+                        logger.warning(f"  Failed to get rules for {card.name}: {e}")
+            except Exception as e:
+                logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
+        
+        logger.info(f"✅ Batch {batch_num}/{total_batches} complete. Total cards so far: {len(cards_by_id)}")
     
     # Convert back to lists
     all_cards = list(cards_by_id.values())

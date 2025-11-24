@@ -191,16 +191,57 @@ class BaseScraper(ABC):
             except:
                 pass
     
-    def parse_html(self, html: str) -> BeautifulSoup:
+    def preprocess_html(self, html: str) -> str:
+        """
+        Preprocess HTML before parsing to improve extraction accuracy.
+        
+        Inspired by: https://github.com/AnurupaK/Credit-Card-Scrape-Agent
+        
+        Removes:
+        - Scripts and styles (already handled by BeautifulSoup, but cleaner to remove early)
+        - Comments
+        - Excessive whitespace
+        - Tracking pixels and analytics
+        
+        Args:
+            html: Raw HTML content
+            
+        Returns:
+            Cleaned HTML string
+        """
+        import re
+        
+        # Remove script and style tags (content only, keep structure)
+        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Remove HTML comments
+        html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+        
+        # Remove tracking pixels and analytics
+        html = re.sub(r'<img[^>]*src=["\']?[^"\']*tracking[^"\']*["\']?[^>]*>', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'<img[^>]*src=["\']?[^"\']*analytics[^"\']*["\']?[^>]*>', '', html, flags=re.IGNORECASE)
+        html = re.sub(r'<img[^>]*src=["\']?[^"\']*pixel[^"\']*["\']?[^>]*>', '', html, flags=re.IGNORECASE)
+        
+        # Normalize whitespace (but preserve structure)
+        html = re.sub(r'\s+', ' ', html)
+        html = re.sub(r'>\s+<', '><', html)  # Remove whitespace between tags
+        
+        return html
+    
+    def parse_html(self, html: str, preprocess: bool = True) -> BeautifulSoup:
         """
         Parse HTML string into BeautifulSoup object.
         
         Args:
             html: HTML content
+            preprocess: If True, clean HTML before parsing (recommended)
             
         Returns:
             BeautifulSoup object
         """
+        if preprocess:
+            html = self.preprocess_html(html)
         return BeautifulSoup(html, "html.parser")
     
     @abstractmethod
