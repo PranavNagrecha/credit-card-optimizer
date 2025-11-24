@@ -9,22 +9,18 @@ import logging
 import sys
 from pathlib import Path
 
+# Add parent directory to path for package imports
+parent_dir = str(Path(__file__).parent.parent)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+# Add current directory to path
+current_dir = str(Path(__file__).parent)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Try package imports first, then fallback to direct imports
 try:
-    from .config import OFFLINE_MODE, USE_CACHE
-    from .data_manager import DataManager
-    from .scrapers.issuers.amex_manual import AmexScraper
-    from .scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
-    from .scrapers.issuers.barclays_manual import BarclaysScraper
-    from .scrapers.issuers.capital_one_manual import CapitalOneScraper
-    from .scrapers.issuers.chase_manual import ChaseScraper
-    from .scrapers.issuers.citi_manual import CitiScraper
-    from .scrapers.issuers.co_branded_manual import CoBrandedScraper
-    from .scrapers.issuers.discover_manual import DiscoverScraper
-    from .scrapers.issuers.us_bank_manual import USBankScraper
-    from .scrapers.issuers.wells_fargo_manual import WellsFargoScraper
-except ImportError:
-    # Fallback for direct execution
-    sys.path.insert(0, str(Path(__file__).parent.parent))
     from credit_card_optimizer.config import OFFLINE_MODE, USE_CACHE
     from credit_card_optimizer.data_manager import DataManager
     from credit_card_optimizer.scrapers.issuers.amex_manual import AmexScraper
@@ -37,6 +33,20 @@ except ImportError:
     from credit_card_optimizer.scrapers.issuers.discover_manual import DiscoverScraper
     from credit_card_optimizer.scrapers.issuers.us_bank_manual import USBankScraper
     from credit_card_optimizer.scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+except ImportError:
+    # Fallback: direct imports (when running from same directory)
+    from config import OFFLINE_MODE, USE_CACHE
+    from data_manager import DataManager
+    from scrapers.issuers.amex_manual import AmexScraper
+    from scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
+    from scrapers.issuers.barclays_manual import BarclaysScraper
+    from scrapers.issuers.capital_one_manual import CapitalOneScraper
+    from scrapers.issuers.chase_manual import ChaseScraper
+    from scrapers.issuers.citi_manual import CitiScraper
+    from scrapers.issuers.co_branded_manual import CoBrandedScraper
+    from scrapers.issuers.discover_manual import DiscoverScraper
+    from scrapers.issuers.us_bank_manual import USBankScraper
+    from scrapers.issuers.wells_fargo_manual import WellsFargoScraper
 
 logging.basicConfig(
     level=logging.INFO,
