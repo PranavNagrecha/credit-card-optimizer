@@ -88,11 +88,12 @@ class BankOfAmericaScraper(BaseScraper):
                     "activation_required": True,
                 },
                 {
-                    "description": "Wholesale clubs",
-                    "categories": ["wholesale"],
+                    "description": "Grocery stores and wholesale clubs",
+                    "categories": ["groceries", "wholesale"],
                     "multiplier": 2.0,
                     "reward_type": RewardType.CASHBACK_PERCENT,
                     "caps": [{"amount": 2500.0, "period": "quarter"}],
+                    "notes": "Excludes superstores (Walmart, Target), drugstores, and convenience stores",
                 },
                 {
                     "description": "All other purchases",

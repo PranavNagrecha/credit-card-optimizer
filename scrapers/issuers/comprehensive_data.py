@@ -537,6 +537,70 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             ],
         },
     },
+    "bank_of_america": {
+        "premium-rewards": {
+            "name": "Bank of America Premium Rewards",
+            "annual_fee": 95.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Travel and dining purchases",
+                    "categories": ["travel", "restaurants"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.5,
+                },
+            ],
+        },
+        "customized-cash-rewards": {
+            "name": "Bank of America Customized Cash Rewards",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.CASHBACK_PERCENT,
+            "foreign_transaction_fee": 0.03,
+            "earning_rules": [
+                {
+                    "description": "Choice category (gas, online shopping, dining, drug stores, home improvement, or travel)",
+                    "categories": ["gas", "online_shopping", "restaurants", "pharmacy", "travel", "home_improvement"],
+                    "multiplier": 3.0,
+                    "caps": [{"amount": 2500.0, "period": "quarter"}],
+                    "is_rotating": True,
+                    "notes": "Select one category per quarter. Activation required.",
+                },
+                {
+                    "description": "Grocery stores and wholesale clubs",
+                    "categories": ["groceries", "wholesale"],
+                    "multiplier": 2.0,
+                    "caps": [{"amount": 2500.0, "period": "quarter"}],
+                    "notes": "Excludes superstores (Walmart, Target), drugstores, and convenience stores",
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "travel-rewards": {
+            "name": "Bank of America Travel Rewards",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "All purchases",
+                    "categories": [],
+                    "multiplier": 1.5,
+                },
+            ],
+        },
+    },
     "barclays": {
         "avios": {
             "name": "Barclays AAdvantage Aviator Red World Elite Mastercard",
