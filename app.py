@@ -32,23 +32,23 @@ from models import CardProduct, EarningRule
 # For scraper_job, we implement it directly using direct imports
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
-    # Ensure current directory is in path for relative imports to work
-    if current_dir not in sys.path:
-        sys.path.insert(0, current_dir)
+    # Add parent directory to path so we can import as a package
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
     
     try:
-        # Import scrapers - they use relative imports (from ...models)
-        # So we need to import them as if we're in the package
-        from scrapers.issuers.amex_manual import AmexScraper
-        from scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
-        from scrapers.issuers.barclays_manual import BarclaysScraper
-        from scrapers.issuers.capital_one_manual import CapitalOneScraper
-        from scrapers.issuers.chase_manual import ChaseScraper
-        from scrapers.issuers.citi_manual import CitiScraper
-        from scrapers.issuers.co_branded_manual import CoBrandedScraper
-        from scrapers.issuers.discover_manual import DiscoverScraper
-        from scrapers.issuers.us_bank_manual import USBankScraper
-        from scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+        # Import scrapers using full package path so relative imports work
+        # The scrapers use relative imports (from ...models) which requires package structure
+        from credit_card_optimizer.scrapers.issuers.amex_manual import AmexScraper
+        from credit_card_optimizer.scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
+        from credit_card_optimizer.scrapers.issuers.barclays_manual import BarclaysScraper
+        from credit_card_optimizer.scrapers.issuers.capital_one_manual import CapitalOneScraper
+        from credit_card_optimizer.scrapers.issuers.chase_manual import ChaseScraper
+        from credit_card_optimizer.scrapers.issuers.citi_manual import CitiScraper
+        from credit_card_optimizer.scrapers.issuers.co_branded_manual import CoBrandedScraper
+        from credit_card_optimizer.scrapers.issuers.discover_manual import DiscoverScraper
+        from credit_card_optimizer.scrapers.issuers.us_bank_manual import USBankScraper
+        from credit_card_optimizer.scrapers.issuers.wells_fargo_manual import WellsFargoScraper
         
         logger.info("Starting card and rule scraping job...")
         
