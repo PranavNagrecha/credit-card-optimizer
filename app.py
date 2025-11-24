@@ -253,27 +253,16 @@ async def health():
 
 @app.post("/api/refresh", tags=["Admin"])
 async def refresh_data():
-    try:
-        logger.info("Manual refresh triggered via API")
-        success = scrape_all_cards_and_rules()
-        
-        if success:
-            load_all_cards_and_rules(force_refresh=True)
-            return {
-                "status": "success",
-                "message": "Card data refreshed successfully"
-            }
-        else:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to refresh card data. Check logs for details."
-            )
-    except Exception as e:
-        logger.error(f"Error refreshing data: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error refreshing data: {str(e)}"
-        )
+    """
+    DISABLED: Data refresh is handled by scheduled job, not user requests.
+    
+    Data is automatically refreshed daily at midnight via scheduled job.
+    Users always get cached data for fast responses.
+    """
+    raise HTTPException(
+        status_code=403,
+        detail="Data refresh is automatic via scheduled job. Users receive cached data for fast responses. Contact admin if data needs manual refresh."
+    )
 
 @app.get("/api/recommend", response_model=RecommendationResponse, tags=["Recommendations"])
 async def get_recommendation(
