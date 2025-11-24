@@ -43,6 +43,9 @@ try:
     from credit_card_optimizer.scrapers.issuers.discover_manual import DiscoverScraper
     from credit_card_optimizer.scrapers.issuers.us_bank_manual import USBankScraper
     from credit_card_optimizer.scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+    from credit_card_optimizer.scrapers.issuers.apple_manual import AppleScraper
+    from credit_card_optimizer.scrapers.issuers.airline_cards_manual import AirlineCardsScraper
+    from credit_card_optimizer.scrapers.issuers.premium_cards_manual import PremiumCardsScraper
 except ImportError:
     # Fallback: direct imports (for Render's flat structure)
     # The scrapers will use relative imports (from ...models) which should work
@@ -59,6 +62,9 @@ except ImportError:
     from scrapers.issuers.discover_manual import DiscoverScraper
     from scrapers.issuers.us_bank_manual import USBankScraper
     from scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+    from scrapers.issuers.apple_manual import AppleScraper
+    from scrapers.issuers.airline_cards_manual import AirlineCardsScraper
+    from scrapers.issuers.premium_cards_manual import PremiumCardsScraper
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,18 +86,38 @@ def scrape_all_cards_and_rules():
     all_cards = []
     all_rules = []
     
-    scrapers = [
-        ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-        CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
-    ]
+    # Primary scraper: NerdWallet (aggregates all cards)
+    # Fallback scrapers: Individual issuer scrapers (for cards not on NerdWallet)
+    scrapers = []
+    
+    # Use NerdWallet as primary source (scrapes all cards from one place)
+    try:
+        from credit_card_optimizer.scrapers.issuers.nerdwallet_scraper import NerdWalletScraper
+        scrapers.append(NerdWalletScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE))
+        logger.info("✅ Using NerdWallet as primary data source (scrapes all cards)")
+    except ImportError:
+        try:
+            from scrapers.issuers.nerdwallet_scraper import NerdWalletScraper
+            scrapers.append(NerdWalletScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE))
+            logger.info("✅ Using NerdWallet as primary data source (scrapes all cards)")
+        except ImportError as e:
+            logger.warning(f"NerdWallet scraper not available ({e}), using individual scrapers as fallback")
+            # Fallback to individual scrapers
+            scrapers = [
+                ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                AppleScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                AirlineCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+                PremiumCardsScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            ]
     
     for scraper in scrapers:
         try:

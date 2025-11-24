@@ -642,5 +642,301 @@ COMPREHENSIVE_CARD_DATA: Dict[str, Dict] = {
             ],
         },
     },
+    "apple": {
+        "apple-card": {
+            "name": "Apple Card",
+            "annual_fee": 0.0,
+            "network": CardNetwork.MASTERCARD,
+            "reward_type": RewardType.CASHBACK_PERCENT,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Apple purchases (Apple Store, apple.com, App Store, iTunes, Apple Music, iCloud)",
+                    "categories": ["electronics", "shopping"],
+                    "merchant_names": ["Apple", "Apple Store", "apple.com", "App Store", "iTunes", "Apple Music", "iCloud"],
+                    "multiplier": 3.0,
+                },
+                {
+                    "description": "Purchases made with Apple Pay",
+                    "categories": [],
+                    "multiplier": 2.0,
+                    "stacking_rules": "Must use Apple Pay",
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+    },
+    "airline_cards": {
+        "united-explorer": {
+            "name": "United Explorer Card",
+            "annual_fee": 95.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "United purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["United Airlines", "united.com"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "Restaurants and hotel purchases",
+                    "categories": ["restaurants", "travel", "hotel"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "united-club-infinite": {
+            "name": "United Club Infinite Card",
+            "annual_fee": 525.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "United purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["United Airlines", "united.com"],
+                    "multiplier": 4.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 2.0,
+                },
+            ],
+        },
+        "delta-gold": {
+            "name": "Delta SkyMiles Gold American Express Card",
+            "annual_fee": 99.0,
+            "network": CardNetwork.AMEX,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Delta purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["Delta", "delta.com", "Delta Air Lines"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "Restaurants and U.S. supermarkets",
+                    "categories": ["restaurants", "groceries"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "delta-platinum": {
+            "name": "Delta SkyMiles Platinum American Express Card",
+            "annual_fee": 250.0,
+            "network": CardNetwork.AMEX,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Delta purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["Delta", "delta.com", "Delta Air Lines"],
+                    "multiplier": 3.0,
+                },
+                {
+                    "description": "Restaurants and U.S. supermarkets",
+                    "categories": ["restaurants", "groceries"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "delta-reserve": {
+            "name": "Delta SkyMiles Reserve American Express Card",
+            "annual_fee": 550.0,
+            "network": CardNetwork.AMEX,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Delta purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["Delta", "delta.com", "Delta Air Lines"],
+                    "multiplier": 3.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "southwest-plus": {
+            "name": "Southwest Rapid Rewards Plus Credit Card",
+            "annual_fee": 69.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Southwest purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["Southwest", "southwest.com", "Southwest Airlines"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "southwest-priority": {
+            "name": "Southwest Rapid Rewards Priority Credit Card",
+            "annual_fee": 149.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Southwest purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["Southwest", "southwest.com", "Southwest Airlines"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "american-airlines-platinum": {
+            "name": "Citi AAdvantage Platinum Select World Elite Mastercard",
+            "annual_fee": 99.0,
+            "network": CardNetwork.MASTERCARD,
+            "reward_type": RewardType.MILES_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "American Airlines purchases",
+                    "categories": ["travel", "airline"],
+                    "merchant_names": ["American Airlines", "aa.com"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "Restaurants and gas stations",
+                    "categories": ["restaurants", "gas"],
+                    "multiplier": 2.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+    },
+    "premium_cards": {
+        "chase-ink-business-unlimited": {
+            "name": "Chase Ink Business Unlimited",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "All purchases",
+                    "categories": [],
+                    "multiplier": 1.5,
+                },
+            ],
+        },
+        "chase-ink-business-cash": {
+            "name": "Chase Ink Business Cash",
+            "annual_fee": 0.0,
+            "network": CardNetwork.VISA,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Office supply stores, internet, cable, and phone services",
+                    "categories": ["utilities", "shopping"],
+                    "multiplier": 5.0,
+                    "caps": [{"amount": 25000.0, "period": "year"}],
+                },
+                {
+                    "description": "Gas stations and restaurants",
+                    "categories": ["gas", "restaurants"],
+                    "multiplier": 2.0,
+                    "caps": [{"amount": 25000.0, "period": "year"}],
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "amex-business-gold": {
+            "name": "American Express Business Gold Card",
+            "annual_fee": 295.0,
+            "network": CardNetwork.AMEX,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Top 2 spending categories each month (from airfare, advertising, gas stations, restaurants, shipping)",
+                    "categories": ["travel", "gas", "restaurants"],
+                    "multiplier": 4.0,
+                    "caps": [{"amount": 150000.0, "period": "year"}],
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+        "citi-prestige": {
+            "name": "Citi Prestige Card",
+            "annual_fee": 495.0,
+            "network": CardNetwork.MASTERCARD,
+            "reward_type": RewardType.POINTS_PER_DOLLAR,
+            "foreign_transaction_fee": 0.0,
+            "earning_rules": [
+                {
+                    "description": "Restaurants and entertainment",
+                    "categories": ["restaurants", "entertainment"],
+                    "multiplier": 5.0,
+                },
+                {
+                    "description": "Air travel and hotels",
+                    "categories": ["travel", "airline", "hotel"],
+                    "multiplier": 3.0,
+                },
+                {
+                    "description": "All other purchases",
+                    "categories": [],
+                    "multiplier": 1.0,
+                },
+            ],
+        },
+    },
 }
 

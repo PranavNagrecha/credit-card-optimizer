@@ -19,6 +19,9 @@ POINT_VALUES = {
     "WELLS_FARGO_POINTS": 0.01,  # Wells Fargo Rewards
     "BARCLAYS_POINTS": 0.01,  # Barclays Rewards
     "AMERICAN_AIRLINES_MILES": 0.014,  # American Airlines AAdvantage Miles
+    "UNITED_MILES": 0.014,  # United MileagePlus Miles
+    "DELTA_MILES": 0.014,  # Delta SkyMiles
+    "SOUTHWEST_MILES": 0.014,  # Southwest Rapid Rewards Points
     "DEFAULT": 0.01,  # Default: 1 point = 1 cent
 }
 
