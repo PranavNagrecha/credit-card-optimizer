@@ -29,26 +29,45 @@ from data_manager import DataManager
 from engine import find_best_cards_for_query
 from models import CardProduct, EarningRule
 
-# For scraper_job, we implement it directly using direct imports
+# For scraper_job, we run it as a subprocess to avoid import issues
 def scrape_all_cards_and_rules():
     """Scrape all cards and rules from all issuers and save to disk."""
-    # Add parent directory to path so we can import as a package
-    if parent_dir not in sys.path:
-        sys.path.insert(0, parent_dir)
+    import subprocess
+    
+    # Run scraper_job.py as a subprocess - it handles imports correctly
+    scraper_script = os.path.join(current_dir, "scraper_job.py")
+    
+    if not os.path.exists(scraper_script):
+        logger.error(f"scraper_job.py not found at {scraper_script}")
+        return False
     
     try:
-        # Import scrapers using full package path so relative imports work
-        # The scrapers use relative imports (from ...models) which requires package structure
-        from credit_card_optimizer.scrapers.issuers.amex_manual import AmexScraper
-        from credit_card_optimizer.scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
-        from credit_card_optimizer.scrapers.issuers.barclays_manual import BarclaysScraper
-        from credit_card_optimizer.scrapers.issuers.capital_one_manual import CapitalOneScraper
-        from credit_card_optimizer.scrapers.issuers.chase_manual import ChaseScraper
-        from credit_card_optimizer.scrapers.issuers.citi_manual import CitiScraper
-        from credit_card_optimizer.scrapers.issuers.co_branded_manual import CoBrandedScraper
-        from credit_card_optimizer.scrapers.issuers.discover_manual import DiscoverScraper
-        from credit_card_optimizer.scrapers.issuers.us_bank_manual import USBankScraper
-        from credit_card_optimizer.scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+        logger.info("Running scraper_job.py as subprocess...")
+        # Run the scraper job
+        result = subprocess.run(
+            [sys.executable, scraper_script],
+            cwd=current_dir,
+            capture_output=True,
+            text=True,
+            timeout=600  # 10 minute timeout
+        )
+        
+        if result.returncode == 0:
+            logger.info("✅ Scraper job completed successfully")
+            if result.stdout:
+                logger.info(f"Scraper output: {result.stdout[-500:]}")  # Last 500 chars
+            return True
+        else:
+            logger.error(f"❌ Scraper job failed with return code {result.returncode}")
+            if result.stderr:
+                logger.error(f"Error: {result.stderr[-500:]}")
+            return False
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Scraper job timed out after 10 minutes")
+        return False
+    except Exception as e:
+        logger.error(f"❌ Failed to run scraper job: {e}", exc_info=True)
+        return False
         
         logger.info("Starting card and rule scraping job...")
         
