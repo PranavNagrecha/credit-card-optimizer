@@ -947,7 +947,9 @@ class NerdWalletScraper(BaseScraper):
                 logger.error(f"Error scraping {url}: {e}", exc_info=True)
                 continue
         
-        logger.info(f"Successfully scraped {len(cards)} cards from NerdWallet")
+        logger.info(f"✅ Successfully scraped {len(cards)} cards from NerdWallet (out of {len(card_urls)} attempted)")
+        if len(cards) < len(card_urls):
+            logger.warning(f"⚠️  Only scraped {len(cards)}/{len(card_urls)} cards. Some may have failed or don't exist.")
         return cards
     
     def scrape_earning_rules(self, card: CardProduct) -> List[EarningRule]:

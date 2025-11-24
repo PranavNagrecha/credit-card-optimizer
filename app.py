@@ -92,7 +92,7 @@ def scrape_all_cards_and_rules():
             env=env,
             capture_output=True,
             text=True,
-            timeout=600
+            timeout=1800  # 30 minutes - scraping 97 cards takes time
         )
         
         if result.returncode == 0:
