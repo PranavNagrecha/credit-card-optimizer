@@ -579,6 +579,30 @@
             }
         }
         
+        async function populateIssuerFilterFromAllCards() {
+            // Load all cards to populate issuer filter
+            try {
+                const response = await fetch(`${API_URL}/cards`);
+                if (response.ok) {
+                    const allCards = await response.json();
+                    const issuerSelect = document.getElementById('filterIssuer');
+                    const issuers = new Set();
+                    allCards.forEach(card => {
+                        if (card.issuer && card.issuer.name) {
+                            issuers.add(card.issuer.name);
+                        }
+                    });
+                    const sortedIssuers = Array.from(issuers).sort();
+                    issuerSelect.innerHTML = '<option value="">All Issuers</option>';
+                    sortedIssuers.forEach(issuer => {
+                        issuerSelect.innerHTML += `<option value="${issuer}">${issuer}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to populate issuer filter:", error);
+            }
+        }
+        
         function populateIssuerFilter(data) {
             if (!data.candidate_cards) return;
             const issuerSelect = document.getElementById('filterIssuer');
@@ -593,6 +617,136 @@
             sortedIssuers.forEach(issuer => {
                 issuerSelect.innerHTML += `<option value="${issuer}">${issuer}</option>`;
             });
+        }
+        
+        async function browseAllCards() {
+            const resultsDiv = document.getElementById('results');
+            const browseBtn = document.getElementById('browseBtn');
+            
+            browseBtn.disabled = true;
+            browseBtn.textContent = 'Loading...';
+            
+            resultsDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading all credit cards...</p>
+                </div>
+            `;
+            
+            try {
+                // Build query parameters with filters
+                const params = new URLSearchParams();
+                
+                const cardTypeFilter = document.getElementById('filterCardType')?.value || 'all';
+                if (cardTypeFilter && cardTypeFilter !== 'all') {
+                    params.append('card_type', cardTypeFilter);
+                }
+                
+                const issuerFilter = document.getElementById('filterIssuer')?.value;
+                if (issuerFilter) params.append('issuer', issuerFilter);
+                
+                const rewardTypeFilter = document.getElementById('filterRewardType')?.value;
+                if (rewardTypeFilter) params.append('reward_type', rewardTypeFilter);
+                
+                const networkFilter = document.getElementById('filterNetwork')?.value;
+                if (networkFilter) params.append('network', networkFilter);
+                
+                const response = await fetch(`${API_URL}/cards?${params.toString()}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `API error: ${response.status}`);
+                }
+                
+                const allCards = await response.json();
+                
+                // Convert to the format expected by displayResults
+                const mockData = {
+                    merchant_query: "All Cards",
+                    resolved_categories: [],
+                    candidate_cards: allCards.map(card => ({
+                        card: card,
+                        effective_rate_cents_per_dollar: 0, // No rate for browse mode
+                        explanation: "Browse all available cards",
+                        notes: [],
+                        is_rotating: false
+                    })),
+                    explanation: `Showing ${allCards.length} credit card${allCards.length !== 1 ? 's' : ''}`
+                };
+                
+                window.lastSearchResults = mockData;
+                displayResults(mockData);
+                populateIssuerFilterFromAllCards();
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}<br>
+                        <small>Make sure the API is running. Check the status indicator above.</small>
+                    </div>
+                `;
+            } finally {
+                browseBtn.disabled = false;
+                browseBtn.textContent = 'Browse All Cards';
+            }
+        }
+        
+        async function applyFiltersToResults() {
+            // If we're in browse mode (no search query), reload from API with filters
+            const queryInput = document.getElementById('queryInput').value.trim();
+            if (!queryInput && window.lastSearchResults && window.lastSearchResults.merchant_query === "All Cards") {
+                await browseAllCards();
+                return;
+            }
+            
+            // Otherwise, apply client-side filters to existing results
+            if (!window.lastSearchResults) return;
+            
+            const cardTypeFilter = document.getElementById('filterCardType')?.value || 'all';
+            const issuerFilter = document.getElementById('filterIssuer')?.value || '';
+            const rewardTypeFilter = document.getElementById('filterRewardType')?.value || '';
+            const networkFilter = document.getElementById('filterNetwork')?.value || '';
+            
+            const filteredCards = window.lastSearchResults.candidate_cards.filter(cs => {
+                const card = cs.card;
+                
+                // Card type filter
+                if (cardTypeFilter === 'personal' && card.is_business_card) return false;
+                if (cardTypeFilter === 'business' && !card.is_business_card) return false;
+                
+                // Issuer filter
+                if (issuerFilter && card.issuer.name !== issuerFilter) return false;
+                
+                // Reward type filter
+                if (rewardTypeFilter) {
+                    const rewardTypeMap = {
+                        'cashback': 'cashback_percent',
+                        'points': 'points_per_dollar',
+                        'miles': 'miles_per_dollar'
+                    };
+                    if (card.type !== rewardTypeMap[rewardTypeFilter]) return false;
+                }
+                
+                // Network filter
+                if (networkFilter) {
+                    const networkMap = {
+                        'visa': 'VISA',
+                        'mastercard': 'MASTERCARD',
+                        'amex': 'AMEX',
+                        'discover': 'DISCOVER'
+                    };
+                    if (card.network !== networkMap[networkFilter]) return false;
+                }
+                
+                return true;
+            });
+            
+            // Update display with filtered results
+            const mockData = {
+                ...window.lastSearchResults,
+                candidate_cards: filteredCards,
+                explanation: `Showing ${filteredCards.length} card${filteredCards.length !== 1 ? 's' : ''}`
+            };
+            displayResults(mockData);
         }
         
         function displayResults(data) {
@@ -620,15 +774,21 @@
             
             data.candidate_cards.forEach((cardScore, index) => {
                 const card = cardScore.card;
-                const isBest = index === 0;
+                const isBest = index === 0 && cardScore.effective_rate_cents_per_dollar > 0;
+                // Determine reward type display value
+                let rewardTypeDisplay = card.type;
+                if (card.type === 'cashback_percent') rewardTypeDisplay = 'cashback';
+                else if (card.type === 'points_per_dollar') rewardTypeDisplay = 'points';
+                else if (card.type === 'miles_per_dollar') rewardTypeDisplay = 'miles';
+                
                 html += `
-                    <div class="card ${isBest ? 'best' : ''}">
+                    <div class="card ${isBest ? 'best' : ''}" data-issuer="${card.issuer.name}" data-reward-type="${rewardTypeDisplay}" data-network="${card.network}" data-business="${card.is_business_card || false}">
                         <div class="card-header">
                             <div class="card-name">
                                 ${isBest ? '🏆 ' : ''}${index + 1}. ${card.name}
                             </div>
                             <div class="card-rate ${isBest ? 'best' : ''}">
-                                ${cardScore.effective_rate_cents_per_dollar.toFixed(2)}% return
+                                ${cardScore.effective_rate_cents_per_dollar > 0 ? cardScore.effective_rate_cents_per_dollar.toFixed(2) + '% return' : 'Browse mode'}
                             </div>
                         </div>
                         <div class="card-details">
@@ -717,6 +877,9 @@
         
         // Load status on page load
         loadStatus();
+        
+        // Populate issuer filter from all cards on page load
+        populateIssuerFilterFromAllCards();
         
         // Refresh status every 30 seconds
         setInterval(loadStatus, 30000);
