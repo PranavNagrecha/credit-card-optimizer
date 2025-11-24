@@ -29,26 +29,72 @@ from data_manager import DataManager
 from engine import find_best_cards_for_query
 from models import CardProduct, EarningRule
 
-# For scraper_job, we need to handle it differently since it uses relative imports
-# We'll define scrape_all_cards_and_rules inline to avoid import issues
+# For scraper_job, we implement it directly using direct imports
 def scrape_all_cards_and_rules():
-    """Wrapper for scraper job that handles imports properly."""
-    # Add parent to path for package imports
-    if parent_dir not in sys.path:
-        sys.path.insert(0, parent_dir)
+    """Scrape all cards and rules from all issuers and save to disk."""
+    # Add scrapers directory to path
+    scrapers_dir = os.path.join(current_dir, "scrapers")
+    if scrapers_dir not in sys.path:
+        sys.path.insert(0, scrapers_dir)
     
     try:
-        from credit_card_optimizer.scraper_job import scrape_all_cards_and_rules as _scrape
-        return _scrape()
-    except ImportError:
-        # If that fails, try importing scraper_job directly
+        # Import scrapers using direct imports
+        from scrapers.issuers.amex_manual import AmexScraper
+        from scrapers.issuers.bank_of_america_manual import BankOfAmericaScraper
+        from scrapers.issuers.barclays_manual import BarclaysScraper
+        from scrapers.issuers.capital_one_manual import CapitalOneScraper
+        from scrapers.issuers.chase_manual import ChaseScraper
+        from scrapers.issuers.citi_manual import CitiScraper
+        from scrapers.issuers.co_branded_manual import CoBrandedScraper
+        from scrapers.issuers.discover_manual import DiscoverScraper
+        from scrapers.issuers.us_bank_manual import USBankScraper
+        from scrapers.issuers.wells_fargo_manual import WellsFargoScraper
+        
+        logger.info("Starting card and rule scraping job...")
+        
+        all_cards = []
+        all_rules = []
+        
+        scrapers = [
+            ChaseScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            AmexScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            CitiScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            CapitalOneScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            BankOfAmericaScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            DiscoverScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            USBankScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            WellsFargoScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            BarclaysScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+            CoBrandedScraper(use_cache=USE_CACHE, offline_mode=OFFLINE_MODE),
+        ]
+        
+        for scraper in scrapers:
+            try:
+                logger.info(f"Scraping {scraper.issuer_name}...")
+                cards = scraper.scrape_cards()
+                all_cards.extend(cards)
+                logger.info(f"  Found {len(cards)} cards")
+                
+                for card in cards:
+                    try:
+                        rules = scraper.scrape_earning_rules(card)
+                        all_rules.extend(rules)
+                    except Exception as e:
+                        logger.warning(f"  Failed to get rules for {card.name}: {e}")
+            except Exception as e:
+                logger.error(f"Failed to scrape {scraper.issuer_name}: {e}", exc_info=True)
+        
+        # Save to disk
         try:
-            import scraper_job
-            return scraper_job.scrape_all_cards_and_rules()
+            _data_manager.save_cards_and_rules(all_cards, all_rules)
+            logger.info(f"✅ Successfully scraped and saved {len(all_cards)} cards and {len(all_rules)} rules")
+            return True
         except Exception as e:
-            import logging
-            logging.error(f"Failed to import scraper_job: {e}")
+            logger.error(f"❌ Failed to save data: {e}", exc_info=True)
             return False
+    except Exception as e:
+        logger.error(f"Failed to import scrapers: {e}", exc_info=True)
+        return False
 
 # Now import api components
 import logging
