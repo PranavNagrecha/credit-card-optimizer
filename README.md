@@ -201,7 +201,11 @@ python -m credit_card_optimizer.api
 - `GET /api/stats` - Get statistics
 - `GET /health` - Health check
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+## Deployment
+
+- **Quick Start**: See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment instructions
+- **Free Hosting Options**: See [FREE_HOSTING.md](FREE_HOSTING.md) for free hosting platforms
+- **Architecture**: See [HOW_IT_WORKS.md](HOW_IT_WORKS.md) for system architecture
 
 ## Next Steps
 
